@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Last City | CTRL + ALT + DEFEAT</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <header>
+        <h1>LAST CITY</h1>
+        <p>Rebuild Civilization One Click at a Time</p>
+    </header>
+
+    <main>
+        <section class="game-container">
+
+            <h2>Survival Camp</h2>
+
+            <div class="resources">
+
+                <div class="resource-card">
+                    <span>⚡</span>
+                    <h3>Energy</h3>
+                    <p id="energy">0</p>
+                </div>
+
+                <div class="resource-card">
+                    <span>🌾</span>
+                    <h3>Food</h3>
+                    <p id="food">10</p>
+                </div>
+
+                <div class="resource-card">
+                    <span>👥</span>
+                    <h3>Population</h3>
+                    <p id="population">10</p>
+                </div>
+
+                <div class="resource-card">
+                    <span>🔬</span>
+                    <h3>Research</h3>
+                    <p id="research">0</p>
+                </div>
+
+            </div>
+
+            <div class="city-area">
+
+                <h2>Your City</h2>
+
+                <div class="city">
+                    🏕️
+                </div>
+
+                <button id="energyButton">
+                    ⚡ GENERATE ENERGY
+                </button>
+
+                <p>
+                    Each click generates
+                    <strong>1 Energy</strong>
+                </p>
+
+            </div>
+
+        </section>
+    </main>
+
+
+    <script src="game.js"></script>
+
+</body>
+</html>
