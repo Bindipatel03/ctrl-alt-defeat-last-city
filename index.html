@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,68 +12,606 @@
 
 <body>
 
-    <header>
-        <h1>LAST CITY</h1>
-        <p>Rebuild Civilization One Click at a Time</p>
+    <!-- =========================================
+         HEADER
+    ========================================== -->
+
+    <header class="top-header">
+
+        <div class="logo-section">
+            <p class="studio-name">CTRL + ALT + DEFEAT</p>
+            <h1>LAST CITY</h1>
+            <p class="tagline">
+                Rebuild Civilization One Click at a Time
+            </p>
+        </div>
+
+        <div class="header-buttons">
+
+            <button id="saveButton" class="secondary-button">
+                💾 Save
+            </button>
+
+            <button id="resetButton" class="danger-button">
+                ↻ Reset
+            </button>
+
+        </div>
+
     </header>
 
-    <main>
-        <section class="game-container">
 
-            <h2>Survival Camp</h2>
+    <main class="game-container">
 
-            <div class="resources">
+        <!-- =========================================
+             RESOURCE CARDS
+        ========================================== -->
 
-                <div class="resource-card">
-                    <span>⚡</span>
-                    <h3>Energy</h3>
-                    <p id="energy">0</p>
+        <section class="resource-section">
+
+            <div class="resource-card energy-card">
+
+                <div class="resource-icon">
+                    ⚡
                 </div>
 
-                <div class="resource-card">
-                    <span>🌾</span>
-                    <h3>Food</h3>
-                    <p id="food">10</p>
-                </div>
+                <div>
+                    <p class="resource-label">
+                        ENERGY
+                    </p>
 
-                <div class="resource-card">
-                    <span>👥</span>
-                    <h3>Population</h3>
-                    <p id="population">10</p>
-                </div>
+                    <h2 id="energy">
+                        0
+                    </h2>
 
-                <div class="resource-card">
-                    <span>🔬</span>
-                    <h3>Research</h3>
-                    <p id="research">0</p>
+                    <p class="resource-rate">
+                        +<span id="energyPerSecond">0</span>/sec
+                    </p>
                 </div>
 
             </div>
 
-            <div class="city-area">
 
-                <h2>Your City</h2>
+            <div class="resource-card food-card">
 
-                <div class="city">
-                    🏕️
+                <div class="resource-icon">
+                    🌾
                 </div>
 
-                <button id="energyButton">
-                    ⚡ GENERATE ENERGY
-                </button>
+                <div>
+                    <p class="resource-label">
+                        FOOD
+                    </p>
 
-                <p>
-                    Each click generates
-                    <strong>1 Energy</strong>
-                </p>
+                    <h2 id="food">
+                        10
+                    </h2>
+
+                    <p class="resource-rate">
+                        +<span id="foodPerSecond">0</span>/sec
+                    </p>
+                </div>
+
+            </div>
+
+
+            <div class="resource-card population-card">
+
+                <div class="resource-icon">
+                    👥
+                </div>
+
+                <div>
+                    <p class="resource-label">
+                        POPULATION
+                    </p>
+
+                    <h2>
+                        <span id="population">10</span>
+                        /
+                        <span id="populationCapacity">10</span>
+                    </h2>
+
+                    <p class="resource-rate">
+                        Citizens
+                    </p>
+                </div>
+
+            </div>
+
+
+            <div class="resource-card research-card">
+
+                <div class="resource-icon">
+                    🔬
+                </div>
+
+                <div>
+                    <p class="resource-label">
+                        RESEARCH
+                    </p>
+
+                    <h2 id="research">
+                        0
+                    </h2>
+
+                    <p class="resource-rate">
+                        +<span id="researchPerSecond">0</span>/sec
+                    </p>
+                </div>
 
             </div>
 
         </section>
+
+
+
+        <!-- =========================================
+             MAIN GAME LAYOUT
+        ========================================== -->
+
+        <section class="game-layout">
+
+
+            <!-- =====================================
+                 CITY
+            ====================================== -->
+
+            <div class="city-panel">
+
+                <div class="city-header">
+
+                    <div>
+
+                        <p class="eyebrow">
+                            CURRENT CIVILIZATION
+                        </p>
+
+                        <h2 id="cityStage">
+                            Survival Camp
+                        </h2>
+
+                    </div>
+
+
+                    <div class="city-level">
+
+                        <span>
+                            CITY SCORE
+                        </span>
+
+                        <strong id="cityScore">
+                            0
+                        </strong>
+
+                    </div>
+
+                </div>
+
+
+                <div class="city-visual" id="cityVisual">
+
+                    🏕️
+
+                </div>
+
+
+                <p id="cityDescription" class="city-description">
+
+                    A small group of survivors has established
+                    the last remaining camp.
+
+                </p>
+
+
+                <!-- CLICK BUTTON -->
+
+                <button id="energyButton" class="energy-button">
+
+                    <span class="energy-button-icon">
+                        ⚡
+                    </span>
+
+                    <span>
+                        GENERATE ENERGY
+                    </span>
+
+                    <small>
+                        +<span id="clickPower">1</span> Energy
+                    </small>
+
+                </button>
+
+
+                <div class="click-stats">
+
+                    <div>
+
+                        <span>
+                            TOTAL CLICKS
+                        </span>
+
+                        <strong id="totalClicks">
+                            0
+                        </strong>
+
+                    </div>
+
+
+                    <div>
+
+                        <span>
+                            CLICK POWER
+                        </span>
+
+                        <strong>
+                            +<span id="clickPowerStat">1</span>
+                        </strong>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- =====================================
+                 BUILDINGS
+            ====================================== -->
+
+            <aside class="building-panel">
+
+                <div class="panel-heading">
+
+                    <div>
+
+                        <p class="eyebrow">
+                            INFRASTRUCTURE
+                        </p>
+
+                        <h2>
+                            Buildings
+                        </h2>
+
+                    </div>
+
+                    <span class="building-count">
+                        <span id="totalBuildings">0</span> Built
+                    </span>
+
+                </div>
+
+
+
+                <!-- SOLAR GENERATOR -->
+
+                <div class="building-card">
+
+                    <div class="building-top">
+
+                        <div class="building-icon solar-icon">
+                            ☀️
+                        </div>
+
+                        <div>
+
+                            <h3>
+                                Solar Generator
+                            </h3>
+
+                            <p>
+                                Generates Energy automatically.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="building-stats">
+
+                        <span>
+                            Owned
+                            <strong id="solarOwned">
+                                0
+                            </strong>
+                        </span>
+
+                        <span>
+                            Production
+                            <strong>
+                                +1 ⚡/sec
+                            </strong>
+                        </span>
+
+                    </div>
+
+
+                    <button id="buySolar" class="buy-button">
+
+                        Build
+
+                        <span>
+                            <span id="solarCost">25</span>
+                            ⚡
+                        </span>
+
+                    </button>
+
+                </div>
+
+
+
+                <!-- HYDRO FARM -->
+
+                <div class="building-card">
+
+                    <div class="building-top">
+
+                        <div class="building-icon farm-icon">
+                            🌾
+                        </div>
+
+                        <div>
+
+                            <h3>
+                                Hydro Farm
+                            </h3>
+
+                            <p>
+                                Produces Food for your growing city.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="building-stats">
+
+                        <span>
+                            Owned
+                            <strong id="farmOwned">
+                                0
+                            </strong>
+                        </span>
+
+                        <span>
+                            Production
+                            <strong>
+                                +2 🌾/sec
+                            </strong>
+                        </span>
+
+                    </div>
+
+
+                    <button id="buyFarm" class="buy-button">
+
+                        Build
+
+                        <span>
+                            <span id="farmCost">50</span>
+                            ⚡
+                        </span>
+
+                    </button>
+
+                </div>
+
+
+
+                <!-- SHELTER -->
+
+                <div class="building-card">
+
+                    <div class="building-top">
+
+                        <div class="building-icon shelter-icon">
+                            🏠
+                        </div>
+
+                        <div>
+
+                            <h3>
+                                Shelter Block
+                            </h3>
+
+                            <p>
+                                Provides housing for more citizens.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="building-stats">
+
+                        <span>
+                            Owned
+                            <strong id="shelterOwned">
+                                0
+                            </strong>
+                        </span>
+
+                        <span>
+                            Capacity
+                            <strong>
+                                +5 👥
+                            </strong>
+                        </span>
+
+                    </div>
+
+
+                    <button id="buyShelter" class="buy-button">
+
+                        Build
+
+                        <span>
+                            <span id="shelterCost">80</span>
+                            ⚡
+                        </span>
+
+                    </button>
+
+                </div>
+
+
+
+                <!-- RESEARCH LAB -->
+
+                <div class="building-card">
+
+                    <div class="building-top">
+
+                        <div class="building-icon lab-icon">
+                            🔬
+                        </div>
+
+                        <div>
+
+                            <h3>
+                                Research Lab
+                            </h3>
+
+                            <p>
+                                Generates Research Points automatically.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="building-stats">
+
+                        <span>
+                            Owned
+                            <strong id="labOwned">
+                                0
+                            </strong>
+                        </span>
+
+                        <span>
+                            Production
+                            <strong>
+                                +1 🔬/sec
+                            </strong>
+                        </span>
+
+                    </div>
+
+
+                    <button id="buyLab" class="buy-button">
+
+                        Build
+
+                        <span>
+                            <span id="labCost">120</span>
+                            ⚡
+                        </span>
+
+                    </button>
+
+                </div>
+
+
+            </aside>
+
+        </section>
+
+
+
+        <!-- =========================================
+             CITY PROGRESS
+        ========================================== -->
+
+        <section class="progress-panel">
+
+            <div class="progress-header">
+
+                <div>
+
+                    <p class="eyebrow">
+                        CIVILIZATION PROGRESS
+                    </p>
+
+                    <h2>
+                        Rebuild the Last City
+                    </h2>
+
+                </div>
+
+                <span id="nextStageText">
+                    Next Stage: Settlement
+                </span>
+
+            </div>
+
+
+            <div class="progress-track">
+
+                <div
+                    id="progressBar"
+                    class="progress-bar">
+                </div>
+
+            </div>
+
+
+            <div class="stage-labels">
+
+                <span>
+                    Survival
+                </span>
+
+                <span>
+                    Settlement
+                </span>
+
+                <span>
+                    Growing City
+                </span>
+
+                <span>
+                    Advanced
+                </span>
+
+                <span>
+                    Future
+                </span>
+
+            </div>
+
+        </section>
+
+
+
+        <!-- =========================================
+             SAVE STATUS
+        ========================================== -->
+
+        <p id="saveStatus" class="save-status">
+            Progress saves automatically.
+        </p>
+
+
     </main>
+
+
+    <!-- NOTIFICATION -->
+
+    <div id="notification" class="notification">
+        Game Saved
+    </div>
 
 
     <script src="game.js"></script>
 
 </body>
+
 </html>
+

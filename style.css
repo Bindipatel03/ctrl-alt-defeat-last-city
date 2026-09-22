@@ -1,189 +1,1371 @@
+/* =========================================
+   GLOBAL
+========================================= */
+
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
 }
 
+
+:root {
+
+    --background: #05090f;
+    --panel: #0d1621;
+    --panel-light: #121f2d;
+
+    --border: #26394d;
+
+    --text: #f5f7fa;
+    --muted: #8193a6;
+
+    --yellow: #ffc247;
+    --orange: #ff8b35;
+
+    --green: #5bd69b;
+    --blue: #65baff;
+    --purple: #aa8cff;
+}
+
+
 body {
-    font-family: Arial, Helvetica, sans-serif;
-    background:
-        radial-gradient(circle at top, #18263a 0%, #0a1018 45%, #05080d 100%);
-    color: white;
+
     min-height: 100vh;
+
+    font-family:
+        Inter,
+        Arial,
+        Helvetica,
+        sans-serif;
+
+    color: var(--text);
+
+    background:
+        radial-gradient(
+            circle at 50% -10%,
+            #193149 0%,
+            #08111b 35%,
+            #04070b 75%
+        );
+
+    background-attachment: fixed;
 }
 
 
-/* HEADER */
+/* =========================================
+   HEADER
+========================================= */
 
-header {
-    text-align: center;
-    padding: 35px 20px 20px;
+.top-header {
+
+    max-width: 1400px;
+
+    margin: auto;
+
+    padding:
+        32px
+        35px
+        10px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 20px;
 }
 
-header h1 {
-    font-size: 48px;
-    letter-spacing: 6px;
+
+.studio-name {
+
+    font-size: 10px;
+
+    letter-spacing: 4px;
+
+    color: var(--yellow);
+
+    font-weight: bold;
+
+    margin-bottom: 5px;
 }
 
-header p {
-    margin-top: 8px;
-    color: #9ba8b8;
-    font-size: 16px;
+
+.logo-section h1 {
+
+    font-size: 42px;
+
+    letter-spacing: 8px;
+
+    line-height: 1;
 }
 
 
-/* MAIN GAME */
+.tagline {
+
+    color: #93a5b7;
+
+    margin-top: 9px;
+
+    font-size: 14px;
+}
+
+
+.header-buttons {
+
+    display: flex;
+
+    gap: 10px;
+}
+
+
+.secondary-button,
+.danger-button {
+
+    padding:
+        10px
+        16px;
+
+    border-radius: 8px;
+
+    cursor: pointer;
+
+    font-weight: bold;
+
+    transition: 0.2s;
+}
+
+
+.secondary-button {
+
+    background: #152435;
+
+    border: 1px solid #31465c;
+
+    color: white;
+}
+
+
+.secondary-button:hover {
+
+    background: #1d3045;
+}
+
+
+.danger-button {
+
+    background: transparent;
+
+    border: 1px solid #713d46;
+
+    color: #ff8895;
+}
+
+
+.danger-button:hover {
+
+    background: rgba(
+        255,
+        90,
+        108,
+        0.1
+    );
+}
+
+
+
+/* =========================================
+   MAIN CONTAINER
+========================================= */
 
 .game-container {
-    width: 90%;
-    max-width: 1100px;
-    margin: 20px auto;
+
+    width: 94%;
+
+    max-width: 1400px;
+
+    margin:
+        25px
+        auto
+        60px;
 }
 
-.game-container > h2 {
-    text-transform: uppercase;
-    color: #8fa6bc;
+
+
+/* =========================================
+   RESOURCES
+========================================= */
+
+.resource-section {
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(4, 1fr);
+
+    gap: 14px;
+
     margin-bottom: 20px;
 }
 
 
-/* RESOURCE CARDS */
-
-.resources {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 15px;
-}
-
 .resource-card {
-    background: rgba(20, 31, 45, 0.85);
-    border: 1px solid #30445c;
-    border-radius: 14px;
+
+    min-height: 115px;
+
     padding: 20px;
-    text-align: center;
-    transition: 0.3s;
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 16px;
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(19, 34, 49, 0.95),
+            rgba(11, 20, 30, 0.95)
+        );
+
+    border:
+        1px solid
+        var(--border);
+
+    border-radius: 14px;
+
+    transition:
+        transform 0.2s,
+        border-color 0.2s;
 }
+
 
 .resource-card:hover {
-    transform: translateY(-4px);
-    border-color: #62d5ff;
+
+    transform:
+        translateY(-3px);
+
+    border-color:
+        #3d5872;
 }
 
-.resource-card span {
-    font-size: 30px;
-}
 
-.resource-card h3 {
-    color: #98a7b7;
-    font-size: 14px;
-    margin: 10px 0 5px;
-    text-transform: uppercase;
-}
+.resource-icon {
 
-.resource-card p {
+    width: 50px;
+    height: 50px;
+
+    border-radius: 12px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
     font-size: 28px;
+
+    background:
+        rgba(
+            255,
+            255,
+            255,
+            0.04
+        );
+}
+
+
+.resource-label {
+
+    color: var(--muted);
+
+    font-size: 10px;
+
+    letter-spacing: 1.5px;
+
     font-weight: bold;
 }
 
 
-/* CITY AREA */
+.resource-card h2 {
 
-.city-area {
-    margin-top: 30px;
-    background:
-        linear-gradient(
-            rgba(12, 21, 31, 0.9),
-            rgba(8, 13, 20, 0.95)
-        );
+    margin-top: 3px;
 
-    border: 1px solid #30445c;
-    border-radius: 18px;
-    min-height: 430px;
+    font-size: 27px;
+}
+
+
+.resource-rate {
+
+    color: #64788c;
+
+    font-size: 11px;
+
+    margin-top: 3px;
+}
+
+
+
+/* =========================================
+   GAME LAYOUT
+========================================= */
+
+.game-layout {
+
+    display: grid;
+
+    grid-template-columns:
+        minmax(0, 2fr)
+        minmax(320px, 1fr);
+
+    gap: 20px;
+}
+
+
+
+/* =========================================
+   CITY PANEL
+========================================= */
+
+.city-panel {
+
+    position: relative;
+
+    min-height: 640px;
+
+    padding: 30px;
 
     display: flex;
+
     flex-direction: column;
+
     align-items: center;
     justify-content: center;
 
-    position: relative;
+    background:
+        radial-gradient(
+            circle at 50% 45%,
+            rgba(35, 71, 95, 0.28),
+            transparent 38%
+        ),
+        linear-gradient(
+            180deg,
+            rgba(15, 27, 40, 0.97),
+            rgba(7, 13, 20, 0.98)
+        );
+
+    border:
+        1px solid
+        var(--border);
+
+    border-radius: 18px;
+
     overflow: hidden;
 }
 
-.city-area h2 {
-    position: absolute;
-    top: 25px;
-    left: 30px;
 
-    color: #95a8b9;
-    text-transform: uppercase;
+.city-panel::before {
+
+    content: "";
+
+    position: absolute;
+
+    width: 500px;
+    height: 500px;
+
+    border-radius: 50%;
+
+    background:
+        radial-gradient(
+            circle,
+            rgba(255, 186, 68, 0.05),
+            transparent 65%
+        );
+
+    pointer-events: none;
+}
+
+
+.city-header {
+
+    position: absolute;
+
+    top: 27px;
+    left: 30px;
+    right: 30px;
+
+    display: flex;
+
+    justify-content: space-between;
+
+    align-items: center;
+}
+
+
+.eyebrow {
+
+    color: #6d8296;
+
+    font-size: 9px;
+
+    font-weight: bold;
+
     letter-spacing: 2px;
 }
 
 
-/* CITY */
+.city-header h2 {
 
-.city {
-    font-size: 110px;
-    margin-bottom: 35px;
+    margin-top: 5px;
 
-    filter: drop-shadow(0 0 25px rgba(255, 177, 69, 0.25));
+    font-size: 23px;
 }
 
 
-/* ENERGY BUTTON */
+.city-level {
 
-#energyButton {
+    min-width: 95px;
+
+    padding:
+        9px
+        15px;
+
+    text-align: right;
+
+    background:
+        rgba(
+            255,
+            255,
+            255,
+            0.035
+        );
+
+    border:
+        1px solid
+        var(--border);
+
+    border-radius: 10px;
+}
+
+
+.city-level span {
+
+    display: block;
+
+    color: #6f8498;
+
+    font-size: 8px;
+
+    letter-spacing: 1px;
+}
+
+
+.city-level strong {
+
+    display: block;
+
+    margin-top: 3px;
+
+    color: var(--yellow);
+
+    font-size: 18px;
+}
+
+
+
+/* =========================================
+   CITY VISUAL
+========================================= */
+
+.city-visual {
+
+    position: relative;
+
+    z-index: 2;
+
+    max-width: 650px;
+
+    text-align: center;
+
+    font-size: clamp(
+        80px,
+        10vw,
+        130px
+    );
+
+    letter-spacing: 7px;
+
+    line-height: 1.3;
+
+    filter:
+        drop-shadow(
+            0
+            12px
+            30px
+            rgba(
+                0,
+                0,
+                0,
+                0.6
+            )
+        );
+
+    transition:
+        transform
+        0.4s;
+}
+
+
+.city-visual:hover {
+
+    transform:
+        scale(1.03);
+}
+
+
+.city-description {
+
+    position: relative;
+
+    z-index: 2;
+
+    max-width: 550px;
+
+    margin:
+        20px
+        auto
+        25px;
+
+    color: #8496a8;
+
+    font-size: 13px;
+
+    text-align: center;
+
+    line-height: 1.6;
+}
+
+
+
+/* =========================================
+   ENERGY BUTTON
+========================================= */
+
+.energy-button {
+
+    position: relative;
+
+    z-index: 3;
+
+    min-width: 290px;
+
+    padding:
+        17px
+        30px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    gap: 10px;
+
     border: none;
-    padding: 20px 45px;
 
     border-radius: 12px;
 
-    background: linear-gradient(
-        135deg,
-        #ffc845,
-        #ff8c32
-    );
+    cursor: pointer;
 
     color: #111;
 
+    background:
+        linear-gradient(
+            135deg,
+            #ffd05a,
+            #ff8c34
+        );
+
+    font-size: 15px;
+
+    font-weight: 900;
+
+    letter-spacing: 0.5px;
+
+    box-shadow:
+        0
+        8px
+        30px
+        rgba(
+            255,
+            154,
+            51,
+            0.2
+        );
+
+    transition:
+        0.15s;
+}
+
+
+.energy-button:hover {
+
+    transform:
+        translateY(-2px)
+        scale(1.02);
+
+    box-shadow:
+        0
+        10px
+        35px
+        rgba(
+            255,
+            154,
+            51,
+            0.35
+        );
+}
+
+
+.energy-button:active {
+
+    transform:
+        scale(0.96);
+}
+
+
+.energy-button-icon {
+
+    font-size: 22px;
+}
+
+
+.energy-button small {
+
+    padding-left: 10px;
+
+    border-left:
+        1px solid
+        rgba(
+            0,
+            0,
+            0,
+            0.2
+        );
+
+    font-size: 10px;
+}
+
+
+
+/* =========================================
+   CLICK STATS
+========================================= */
+
+.click-stats {
+
+    position: relative;
+
+    z-index: 3;
+
+    display: flex;
+
+    gap: 30px;
+
+    margin-top: 25px;
+}
+
+
+.click-stats div {
+
+    min-width: 100px;
+
+    text-align: center;
+}
+
+
+.click-stats span {
+
+    display: block;
+
+    color: #60768b;
+
+    font-size: 8px;
+
+    letter-spacing: 1px;
+}
+
+
+.click-stats strong {
+
+    display: block;
+
+    margin-top: 4px;
+
     font-size: 18px;
-    font-weight: bold;
+}
+
+
+
+/* =========================================
+   BUILDING PANEL
+========================================= */
+
+.building-panel {
+
+    max-height: 640px;
+
+    padding: 23px;
+
+    overflow-y: auto;
+
+    background:
+        linear-gradient(
+            180deg,
+            rgba(14, 25, 37, 0.98),
+            rgba(8, 16, 25, 0.98)
+        );
+
+    border:
+        1px solid
+        var(--border);
+
+    border-radius: 18px;
+}
+
+
+.panel-heading {
+
+    display: flex;
+
+    align-items: center;
+    justify-content: space-between;
+
+    margin-bottom: 18px;
+}
+
+
+.panel-heading h2 {
+
+    margin-top: 4px;
+
+    font-size: 23px;
+}
+
+
+.building-count {
+
+    padding:
+        6px
+        9px;
+
+    border:
+        1px solid
+        #30455a;
+
+    border-radius: 7px;
+
+    color: #8395a7;
+
+    font-size: 10px;
+}
+
+
+
+/* =========================================
+   BUILDING CARDS
+========================================= */
+
+.building-card {
+
+    padding: 16px;
+
+    margin-bottom: 13px;
+
+    background:
+        rgba(
+            255,
+            255,
+            255,
+            0.025
+        );
+
+    border:
+        1px solid
+        #24384b;
+
+    border-radius: 12px;
+
+    transition:
+        0.2s;
+}
+
+
+.building-card:hover {
+
+    border-color:
+        #405e78;
+
+    transform:
+        translateY(-2px);
+}
+
+
+.building-top {
+
+    display: flex;
+
+    gap: 13px;
+
+    align-items: flex-start;
+}
+
+
+.building-icon {
+
+    flex-shrink: 0;
+
+    width: 46px;
+    height: 46px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 10px;
+
+    font-size: 24px;
+}
+
+
+.solar-icon {
+
+    background:
+        rgba(
+            255,
+            194,
+            71,
+            0.09
+        );
+}
+
+
+.farm-icon {
+
+    background:
+        rgba(
+            91,
+            214,
+            155,
+            0.09
+        );
+}
+
+
+.shelter-icon {
+
+    background:
+        rgba(
+            101,
+            186,
+            255,
+            0.09
+        );
+}
+
+
+.lab-icon {
+
+    background:
+        rgba(
+            170,
+            140,
+            255,
+            0.09
+        );
+}
+
+
+.building-top h3 {
+
+    font-size: 14px;
+
+    margin-top: 2px;
+}
+
+
+.building-top p {
+
+    margin-top: 5px;
+
+    color: #72869a;
+
+    font-size: 10px;
+
+    line-height: 1.4;
+}
+
+
+.building-stats {
+
+    display: flex;
+
+    justify-content: space-between;
+
+    gap: 8px;
+
+    margin:
+        13px
+        0;
+}
+
+
+.building-stats span {
+
+    color: #697d91;
+
+    font-size: 9px;
+}
+
+
+.building-stats strong {
+
+    display: block;
+
+    margin-top: 3px;
+
+    color: #cdd7e1;
+
+    font-size: 11px;
+}
+
+
+
+/* =========================================
+   BUY BUTTON
+========================================= */
+
+.buy-button {
+
+    width: 100%;
+
+    padding:
+        10px
+        12px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: space-between;
+
+    border: none;
+
+    border-radius: 8px;
 
     cursor: pointer;
 
-    box-shadow:
-        0 0 25px rgba(255, 167, 52, 0.25);
+    background:
+        #1c3347;
 
-    transition: 0.15s;
-}
+    color: white;
 
-#energyButton:hover {
-    transform: scale(1.05);
+    font-size: 11px;
 
-    box-shadow:
-        0 0 35px rgba(255, 167, 52, 0.45);
-}
+    font-weight: bold;
 
-#energyButton:active {
-    transform: scale(0.95);
-}
-
-.city-area p {
-    margin-top: 15px;
-    color: #8797a7;
+    transition:
+        0.2s;
 }
 
 
-/* MOBILE */
+.buy-button:hover:not(:disabled) {
 
-@media (max-width: 750px) {
+    background:
+        #26475f;
 
-    .resources {
-        grid-template-columns: repeat(2, 1fr);
+    transform:
+        translateY(-1px);
+}
+
+
+.buy-button span {
+
+    color: var(--yellow);
+}
+
+
+.buy-button:disabled {
+
+    opacity: 0.36;
+
+    cursor: not-allowed;
+}
+
+
+
+/* =========================================
+   PROGRESS
+========================================= */
+
+.progress-panel {
+
+    margin-top: 20px;
+
+    padding: 23px;
+
+    background:
+        rgba(
+            13,
+            23,
+            34,
+            0.9
+        );
+
+    border:
+        1px solid
+        var(--border);
+
+    border-radius: 15px;
+}
+
+
+.progress-header {
+
+    display: flex;
+
+    justify-content: space-between;
+
+    align-items: flex-end;
+
+    gap: 15px;
+}
+
+
+.progress-header h2 {
+
+    margin-top: 5px;
+
+    font-size: 18px;
+}
+
+
+#nextStageText {
+
+    color: #778da1;
+
+    font-size: 10px;
+}
+
+
+.progress-track {
+
+    height: 8px;
+
+    margin-top: 18px;
+
+    overflow: hidden;
+
+    background: #101d29;
+
+    border-radius: 100px;
+}
+
+
+.progress-bar {
+
+    width: 0%;
+
+    height: 100%;
+
+    border-radius: 100px;
+
+    background:
+        linear-gradient(
+            90deg,
+            #ffc247,
+            #ff8b35
+        );
+
+    transition:
+        width
+        0.5s ease;
+}
+
+
+.stage-labels {
+
+    display: flex;
+
+    justify-content: space-between;
+
+    margin-top: 9px;
+
+    color: #526679;
+
+    font-size: 8px;
+
+    text-transform: uppercase;
+
+    letter-spacing: 0.5px;
+}
+
+
+
+/* =========================================
+   SAVE
+========================================= */
+
+.save-status {
+
+    margin-top: 13px;
+
+    text-align: right;
+
+    color: #53697d;
+
+    font-size: 9px;
+}
+
+
+.notification {
+
+    position: fixed;
+
+    right: 25px;
+    bottom: 25px;
+
+    padding:
+        12px
+        20px;
+
+    border:
+        1px solid
+        #315d4b;
+
+    border-radius: 9px;
+
+    background:
+        #10251e;
+
+    color: #72dfaa;
+
+    font-size: 12px;
+
+    font-weight: bold;
+
+    opacity: 0;
+
+    pointer-events: none;
+
+    transform:
+        translateY(15px);
+
+    transition:
+        0.3s;
+}
+
+
+.notification.show {
+
+    opacity: 1;
+
+    transform:
+        translateY(0);
+}
+
+
+
+/* =========================================
+   SCROLLBAR
+========================================= */
+
+::-webkit-scrollbar {
+
+    width: 7px;
+}
+
+
+::-webkit-scrollbar-track {
+
+    background: #07101a;
+}
+
+
+::-webkit-scrollbar-thumb {
+
+    background: #263c50;
+
+    border-radius: 100px;
+}
+
+
+
+/* =========================================
+   TABLET
+========================================= */
+
+@media (max-width: 1000px) {
+
+    .game-layout {
+
+        grid-template-columns:
+            1fr;
     }
 
-    header h1 {
-        font-size: 34px;
+
+    .building-panel {
+
+        max-height: none;
+    }
+
+
+    .city-panel {
+
+        min-height: 570px;
+    }
+
+}
+
+
+
+/* =========================================
+   MOBILE
+========================================= */
+
+@media (max-width: 700px) {
+
+    .top-header {
+
+        align-items: flex-start;
+
+        flex-direction: column;
+
+        padding:
+            25px
+            20px
+            10px;
+    }
+
+
+    .logo-section h1 {
+
+        font-size: 32px;
+
+        letter-spacing: 5px;
+    }
+
+
+    .resource-section {
+
+        grid-template-columns:
+            repeat(
+                2,
+                1fr
+            );
+    }
+
+
+    .resource-card {
+
+        min-height: 95px;
+
+        padding: 14px;
+
+        gap: 10px;
+    }
+
+
+    .resource-icon {
+
+        width: 38px;
+        height: 38px;
+
+        font-size: 21px;
+    }
+
+
+    .resource-card h2 {
+
+        font-size: 20px;
+    }
+
+
+    .city-panel {
+
+        min-height: 560px;
+
+        padding: 20px;
+    }
+
+
+    .city-header {
+
+        top: 20px;
+        left: 20px;
+        right: 20px;
+    }
+
+
+    .city-visual {
+
+        font-size: 70px;
+    }
+
+
+    .energy-button {
+
+        min-width: 240px;
+
+        padding:
+            15px
+            20px;
+    }
+
+
+    .progress-header {
+
+        align-items: flex-start;
+
+        flex-direction: column;
+    }
+
+
+    .stage-labels {
+
+        font-size: 6px;
+    }
+
+}
+
+
+
+/* =========================================
+   SMALL PHONES
+========================================= */
+
+@media (max-width: 450px) {
+
+    .resource-section {
+
+        grid-template-columns:
+            1fr;
+    }
+
+
+    .header-buttons {
+
+        width: 100%;
+    }
+
+
+    .header-buttons button {
+
+        flex: 1;
+    }
+
+
+    .click-stats {
+
+        gap: 10px;
     }
 
 }
