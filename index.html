@@ -1,617 +1,349 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
     <title>Last City | CTRL + ALT + DEFEAT</title>
-
     <link rel="stylesheet" href="style.css">
 </head>
-
 <body>
 
-    <!-- =========================================
-         HEADER
-    ========================================== -->
+<header class="top-header">
+    <div class="logo-section">
+        <p class="studio-name">CTRL + ALT + DEFEAT</p>
+        <h1>LAST CITY</h1>
+        <p class="tagline">Rebuild Civilization One Click at a Time</p>
+    </div>
+    <div class="header-buttons">
+        <button id="saveButton" class="secondary-button">💾 Save</button>
+        <button id="resetButton" class="danger-button">↻ Reset</button>
+    </div>
+</header>
 
-    <header class="top-header">
+<main class="game-container">
 
-        <div class="logo-section">
-            <p class="studio-name">CTRL + ALT + DEFEAT</p>
-            <h1>LAST CITY</h1>
-            <p class="tagline">
-                Rebuild Civilization One Click at a Time
-            </p>
-        </div>
+    <nav class="stage-tabs">
+        <button class="stage-tab active" data-stage="1">1. The Ruins</button>
+        <button class="stage-tab locked" data-stage="2">2. The Settlement</button>
+        <button class="stage-tab locked" data-stage="3">3. The Industry</button>
+        <button class="stage-tab locked" data-stage="4">4. The Network</button>
+        <button class="stage-tab locked" data-stage="5">5. The Ascension</button>
+    </nav>
 
-        <div class="header-buttons">
-
-            <button id="saveButton" class="secondary-button">
-                💾 Save
-            </button>
-
-            <button id="resetButton" class="danger-button">
-                ↻ Reset
-            </button>
-
-        </div>
-
-    </header>
-
-
-    <main class="game-container">
-
-        <!-- =========================================
-             RESOURCE CARDS
-        ========================================== -->
+    <!-- STAGE 1 -->
+    <section id="stage1Panel" class="stage-panel active">
 
         <section class="resource-section">
-
             <div class="resource-card energy-card">
-
-                <div class="resource-icon">
-                    ⚡
-                </div>
-
+                <div class="resource-icon">⚙️</div>
                 <div>
-                    <p class="resource-label">
-                        ENERGY
-                    </p>
-
-                    <h2 id="energy">
-                        0
-                    </h2>
-
-                    <p class="resource-rate">
-                        +<span id="energyPerSecond">0</span>/sec
-                    </p>
+                    <p class="resource-label">SALVAGE</p>
+                    <h2 id="salvage">0</h2>
+                    <p class="resource-rate">+<span id="salvageRate">0</span>/sec</p>
                 </div>
-
             </div>
-
-
-            <div class="resource-card food-card">
-
-                <div class="resource-icon">
-                    🌾
-                </div>
-
-                <div>
-                    <p class="resource-label">
-                        FOOD
-                    </p>
-
-                    <h2 id="food">
-                        10
-                    </h2>
-
-                    <p class="resource-rate">
-                        +<span id="foodPerSecond">0</span>/sec
-                    </p>
-                </div>
-
-            </div>
-
-
-            <div class="resource-card population-card">
-
-                <div class="resource-icon">
-                    👥
-                </div>
-
-                <div>
-                    <p class="resource-label">
-                        POPULATION
-                    </p>
-
-                    <h2>
-                        <span id="population">10</span>
-                        /
-                        <span id="populationCapacity">10</span>
-                    </h2>
-
-                    <p class="resource-rate">
-                        Citizens
-                    </p>
-                </div>
-
-            </div>
-
-
             <div class="resource-card research-card">
-
-                <div class="resource-icon">
-                    🔬
-                </div>
-
+                <div class="resource-icon">💎</div>
                 <div>
-                    <p class="resource-label">
-                        RESEARCH
-                    </p>
-
-                    <h2 id="research">
-                        0
-                    </h2>
-
-                    <p class="resource-rate">
-                        +<span id="researchPerSecond">0</span>/sec
-                    </p>
+                    <p class="resource-label">SALVAGE SHARDS</p>
+                    <h2 id="shards">0</h2>
+                    <p class="resource-rate">Rebirth currency</p>
                 </div>
-
             </div>
-
+            <div class="resource-card food-card">
+                <div class="resource-icon">🌅</div>
+                <div>
+                    <p class="resource-label">REBIRTHS</p>
+                    <h2 id="rebirths">0</h2>
+                    <p class="resource-rate">Total</p>
+                </div>
+            </div>
+            <div class="resource-card population-card">
+                <div class="resource-icon">👆</div>
+                <div>
+                    <p class="resource-label">CLICK POWER</p>
+                    <h2>+<span id="clickPower">1</span></h2>
+                    <p class="resource-rate"><span id="totalClicks">0</span> clicks</p>
+                </div>
+            </div>
         </section>
-
-
-
-        <!-- =========================================
-             MAIN GAME LAYOUT
-        ========================================== -->
 
         <section class="game-layout">
-
-
-            <!-- =====================================
-                 CITY
-            ====================================== -->
-
             <div class="city-panel">
-
                 <div class="city-header">
-
                     <div>
-
-                        <p class="eyebrow">
-                            CURRENT CIVILIZATION
-                        </p>
-
-                        <h2 id="cityStage">
-                            Survival Camp
-                        </h2>
-
+                        <p class="eyebrow">STAGE 1</p>
+                        <h2>The Ruins</h2>
                     </div>
-
-
                     <div class="city-level">
-
-                        <span>
-                            CITY SCORE
-                        </span>
-
-                        <strong id="cityScore">
-                            0
-                        </strong>
-
+                        <span>SALVAGE/SEC</span>
+                        <strong id="salvageRateTop">0</strong>
                     </div>
-
                 </div>
 
-
-                <div class="city-visual" id="cityVisual">
-
-                    🏕️
-
-                </div>
-
-
-                <p id="cityDescription" class="city-description">
-
-                    A small group of survivors has established
-                    the last remaining camp.
-
+                <div class="city-visual" id="cityVisual">🏕️</div>
+                <p class="city-description" id="cityDescription">
+                    Click to gather Salvage. Build. Hit the wall. Rebirth.
                 </p>
 
-
-                <!-- CLICK BUTTON -->
-
                 <button id="energyButton" class="energy-button">
-
-                    <span class="energy-button-icon">
-                        ⚡
-                    </span>
-
-                    <span>
-                        GENERATE ENERGY
-                    </span>
-
-                    <small>
-                        +<span id="clickPower">1</span> Energy
-                    </small>
-
+                    <span class="energy-button-icon">⚙️</span>
+                    <span>GATHER SALVAGE</span>
+                    <small>+<span id="clickPowerStat">1</span></small>
                 </button>
 
-
                 <div class="click-stats">
-
                     <div>
-
-                        <span>
-                            TOTAL CLICKS
-                        </span>
-
-                        <strong id="totalClicks">
-                            0
-                        </strong>
-
+                        <span>TOTAL CLICKS</span>
+                        <strong id="totalClicks2">0</strong>
                     </div>
-
-
                     <div>
-
-                        <span>
-                            CLICK POWER
-                        </span>
-
-                        <strong>
-                            +<span id="clickPowerStat">1</span>
-                        </strong>
-
+                        <span>TOTAL SALVAGE</span>
+                        <strong id="totalSalvage">0</strong>
                     </div>
-
                 </div>
 
+                <button id="rebirthButton" class="rebirth-button" style="margin-top:20px;">
+                    🌅 Rebirth (wall not reached)
+                </button>
+                <div id="rebirthRequirement" class="rebirth-requirement"></div>
             </div>
-
-
-
-            <!-- =====================================
-                 BUILDINGS
-            ====================================== -->
 
             <aside class="building-panel">
-
                 <div class="panel-heading">
-
                     <div>
-
-                        <p class="eyebrow">
-                            INFRASTRUCTURE
-                        </p>
-
-                        <h2>
-                            Buildings
-                        </h2>
-
+                        <p class="eyebrow">INFRASTRUCTURE</p>
+                        <h2>Buildings</h2>
                     </div>
-
-                    <span class="building-count">
-                        <span id="totalBuildings">0</span> Built
-                    </span>
-
                 </div>
-
-
-
-                <!-- SOLAR GENERATOR -->
 
                 <div class="building-card">
-
                     <div class="building-top">
-
-                        <div class="building-icon solar-icon">
-                            ☀️
-                        </div>
-
-                        <div>
-
-                            <h3>
-                                Solar Generator
-                            </h3>
-
-                            <p>
-                                Generates Energy automatically.
-                            </p>
-
-                        </div>
-
+                        <div class="building-icon solar-icon">🏕️</div>
+                        <div><h3>Scavenger Camp</h3><p>+0.2 Salvage/sec</p></div>
                     </div>
-
-
                     <div class="building-stats">
-
-                        <span>
-                            Owned
-                            <strong id="solarOwned">
-                                0
-                            </strong>
-                        </span>
-
-                        <span>
-                            Production
-                            <strong>
-                                +1 ⚡/sec
-                            </strong>
-                        </span>
-
+                        <span>Owned <strong id="scavengerOwned">0</strong></span>
+                        <span>Cost <strong><span id="scavengerCost">15</span> ⚙️</strong></span>
                     </div>
-
-
-                    <button id="buySolar" class="buy-button">
-
-                        Build
-
-                        <span>
-                            <span id="solarCost">25</span>
-                            ⚡
-                        </span>
-
-                    </button>
-
+                    <button id="buyScavenger" class="buy-button">Build <span><span id="scavengerCost2">15</span> ⚙️</span></button>
                 </div>
-
-
-
-                <!-- HYDRO FARM -->
 
                 <div class="building-card">
-
                     <div class="building-top">
-
-                        <div class="building-icon farm-icon">
-                            🌾
-                        </div>
-
-                        <div>
-
-                            <h3>
-                                Hydro Farm
-                            </h3>
-
-                            <p>
-                                Produces Food for your growing city.
-                            </p>
-
-                        </div>
-
+                        <div class="building-icon farm-icon">🏚️</div>
+                        <div><h3>Salvage Yard</h3><p>+1.5 Salvage/sec</p></div>
                     </div>
-
-
                     <div class="building-stats">
-
-                        <span>
-                            Owned
-                            <strong id="farmOwned">
-                                0
-                            </strong>
-                        </span>
-
-                        <span>
-                            Production
-                            <strong>
-                                +2 🌾/sec
-                            </strong>
-                        </span>
-
+                        <span>Owned <strong id="yardOwned">0</strong></span>
+                        <span>Cost <strong><span id="yardCost">120</span> ⚙️</strong></span>
                     </div>
-
-
-                    <button id="buyFarm" class="buy-button">
-
-                        Build
-
-                        <span>
-                            <span id="farmCost">50</span>
-                            ⚡
-                        </span>
-
-                    </button>
-
+                    <button id="buyYard" class="buy-button">Build <span><span id="yardCost2">120</span> ⚙️</span></button>
                 </div>
-
-
-
-                <!-- SHELTER -->
 
                 <div class="building-card">
-
                     <div class="building-top">
-
-                        <div class="building-icon shelter-icon">
-                            🏠
-                        </div>
-
-                        <div>
-
-                            <h3>
-                                Shelter Block
-                            </h3>
-
-                            <p>
-                                Provides housing for more citizens.
-                            </p>
-
-                        </div>
-
+                        <div class="building-icon shelter-icon">🏠</div>
+                        <div><h3>Shelter</h3><p>+1 Population</p></div>
                     </div>
-
-
                     <div class="building-stats">
-
-                        <span>
-                            Owned
-                            <strong id="shelterOwned">
-                                0
-                            </strong>
-                        </span>
-
-                        <span>
-                            Capacity
-                            <strong>
-                                +5 👥
-                            </strong>
-                        </span>
-
+                        <span>Owned <strong id="shelterOwned">0</strong></span>
+                        <span>Cost <strong><span id="shelterCost">700</span> ⚙️</strong></span>
                     </div>
-
-
-                    <button id="buyShelter" class="buy-button">
-
-                        Build
-
-                        <span>
-                            <span id="shelterCost">80</span>
-                            ⚡
-                        </span>
-
-                    </button>
-
+                    <button id="buyShelter" class="buy-button">Build <span><span id="shelterCost2">700</span> ⚙️</span></button>
                 </div>
-
-
-
-                <!-- RESEARCH LAB -->
 
                 <div class="building-card">
-
                     <div class="building-top">
-
-                        <div class="building-icon lab-icon">
-                            🔬
-                        </div>
-
-                        <div>
-
-                            <h3>
-                                Research Lab
-                            </h3>
-
-                            <p>
-                                Generates Research Points automatically.
-                            </p>
-
-                        </div>
-
+                        <div class="building-icon lab-icon">🔧</div>
+                        <div><h3>Workshop</h3><p>+12 Salvage/sec</p></div>
                     </div>
-
-
                     <div class="building-stats">
-
-                        <span>
-                            Owned
-                            <strong id="labOwned">
-                                0
-                            </strong>
-                        </span>
-
-                        <span>
-                            Production
-                            <strong>
-                                +1 🔬/sec
-                            </strong>
-                        </span>
-
+                        <span>Owned <strong id="workshopOwned">0</strong></span>
+                        <span>Cost <strong><span id="workshopCost">3,500</span> ⚙️</strong></span>
                     </div>
-
-
-                    <button id="buyLab" class="buy-button">
-
-                        Build
-
-                        <span>
-                            <span id="labCost">120</span>
-                            ⚡
-                        </span>
-
-                    </button>
-
+                    <button id="buyWorkshop" class="buy-button">Build <span><span id="workshopCost2">3,500</span> ⚙️</span></button>
                 </div>
 
+                <div class="building-card">
+                    <div class="building-top">
+                        <div class="building-icon farm-icon">🌾</div>
+                        <div><h3>Hydro Farm</h3><p>+25 Salvage/sec, +2 Pop</p></div>
+                    </div>
+                    <div class="building-stats">
+                        <span>Owned <strong id="farmOwned">0</strong></span>
+                        <span>Cost <strong><span id="farmCost">18,000</span> ⚙️</strong></span>
+                    </div>
+                    <button id="buyFarm" class="buy-button">Build <span><span id="farmCost2">18,000</span> ⚙️</span></button>
+                </div>
 
+                <div class="building-card">
+                    <div class="building-top">
+                        <div class="building-icon solar-icon">⚡</div>
+                        <div><h3>Power Plant</h3><p>×1.25 all Salvage/sec</p></div>
+                    </div>
+                    <div class="building-stats">
+                        <span>Owned <strong id="powerOwned">0</strong></span>
+                        <span>Cost <strong><span id="powerCost">90,000</span> ⚙️</strong></span>
+                    </div>
+                    <button id="buyPower" class="buy-button">Build <span><span id="powerCost2">90,000</span> ⚙️</span></button>
+                </div>
+
+                <div class="building-card">
+                    <div class="building-top">
+                        <div class="building-icon lab-icon">🏭</div>
+                        <div><h3>Factory</h3><p>+180 Salvage/sec</p></div>
+                    </div>
+                    <div class="building-stats">
+                        <span>Owned <strong id="factoryOwned">0</strong></span>
+                        <span>Cost <strong><span id="factoryCost">500,000</span> ⚙️</strong></span>
+                    </div>
+                    <button id="buyFactory" class="buy-button">Build <span><span id="factoryCost2">500,000</span> ⚙️</span></button>
+                </div>
+
+                <div class="building-card">
+                    <div class="building-top">
+                        <div class="building-icon shelter-icon">🏙️</div>
+                        <div><h3>City Center</h3><p>+1,200 Salvage/sec, +15 Pop</p></div>
+                    </div>
+                    <div class="building-stats">
+                        <span>Owned <strong id="citycenterOwned">0</strong></span>
+                        <span>Cost <strong><span id="citycenterCost">3,000,000</span> ⚙️</strong></span>
+                    </div>
+                    <button id="buyCitycenter" class="buy-button">Build <span><span id="citycenterCost2">3,000,000</span> ⚙️</span></button>
+                </div>
             </aside>
-
         </section>
 
-
-
-        <!-- =========================================
-             CITY PROGRESS
-        ========================================== -->
-
-        <section class="progress-panel">
-
-            <div class="progress-header">
-
+        <section class="upgrade-section">
+            <div class="panel-heading">
                 <div>
-
-                    <p class="eyebrow">
-                        CIVILIZATION PROGRESS
-                    </p>
-
-                    <h2>
-                        Rebuild the Last City
-                    </h2>
-
+                    <p class="eyebrow">PERMANENT</p>
+                    <h2>Rebirth Upgrades (Shards 💎)</h2>
                 </div>
-
-                <span id="nextStageText">
-                    Next Stage: Settlement
-                </span>
-
             </div>
-
-
-            <div class="progress-track">
-
-                <div
-                    id="progressBar"
-                    class="progress-bar">
-                </div>
-
-            </div>
-
-
-            <div class="stage-labels">
-
-                <span>
-                    Survival
-                </span>
-
-                <span>
-                    Settlement
-                </span>
-
-                <span>
-                    Growing City
-                </span>
-
-                <span>
-                    Advanced
-                </span>
-
-                <span>
-                    Future
-                </span>
-
-            </div>
-
+            <div id="rebirthUpgrades" class="upgrade-grid"></div>
         </section>
 
+        <p id="saveStatus" class="save-status">Progress saves automatically.</p>
+    </section>
 
+    <!-- STAGE 2 -->
+    <section id="stage2Panel" class="stage-panel">
+        <section class="resource-section">
+            <div class="resource-card food-card">
+                <div class="resource-icon">🔩</div>
+                <div>
+                    <p class="resource-label">SCRAP</p>
+                    <h2 id="scrap">0</h2>
+                    <p class="resource-rate">+<span id="scrapRate">0</span>/sec</p>
+                </div>
+            </div>
+            <div class="resource-card research-card">
+                <div class="resource-icon">🪙</div>
+                <div>
+                    <p class="resource-label">SETTLEMENT TOKENS</p>
+                    <h2 id="stage2Tokens">0</h2>
+                    <p class="resource-rate">Stage reset currency</p>
+                </div>
+            </div>
+            <div class="resource-card population-card">
+                <div class="resource-icon">🔄</div>
+                <div>
+                    <p class="resource-label">STAGE RESETS</p>
+                    <h2 id="stage2Resets">0</h2>
+                    <p class="resource-rate">5 to unlock Stage 3</p>
+                </div>
+            </div>
+        </section>
 
-        <!-- =========================================
-             SAVE STATUS
-        ========================================== -->
+        <section class="upgrade-section">
+            <div class="panel-heading">
+                <div><p class="eyebrow">SCRAP UPGRADES</p><h2>Spend Scrap</h2></div>
+            </div>
+            <div id="stage2Upgrades" class="upgrade-grid"></div>
+        </section>
 
-        <p id="saveStatus" class="save-status">
-            Progress saves automatically.
-        </p>
+        <section class="upgrade-section">
+            <div class="panel-heading">
+                <div><p class="eyebrow">PERMANENT</p><h2>Settlement Reset Shop (Tokens 🪙)</h2></div>
+            </div>
+            <div id="stage2ResetUpgrades" class="upgrade-grid"></div>
+        </section>
 
+        <button id="stageResetButton" class="rebirth-button">🔄 Stage Reset (Reset Scrap)</button>
+    </section>
 
-    </main>
+    <!-- STAGE 3 -->
+    <section id="stage3Panel" class="stage-panel">
+        <section class="resource-section">
+            <div class="resource-card lab-card">
+                <div class="resource-icon">⚙️</div>
+                <div>
+                    <p class="resource-label">PARTS</p>
+                    <h2 id="parts">0</h2>
+                    <p class="resource-rate">+<span id="partsRate">0</span>/sec</p>
+                </div>
+            </div>
+        </section>
+        <section class="upgrade-section">
+            <div class="panel-heading"><div><p class="eyebrow">PARTS UPGRADES</p><h2>Spend Parts</h2></div></div>
+            <div id="stage3Upgrades" class="upgrade-grid"></div>
+        </section>
+        <section class="upgrade-section">
+            <div class="panel-heading"><div><p class="eyebrow">PERMANENT</p><h2>Industry Reset Shop</h2></div></div>
+            <div id="stage3ResetUpgrades" class="upgrade-grid"></div>
+        </section>
+    </section>
 
+    <!-- STAGE 4 -->
+    <section id="stage4Panel" class="stage-panel">
+        <section class="resource-section">
+            <div class="resource-card lab-card">
+                <div class="resource-icon">🔌</div>
+                <div>
+                    <p class="resource-label">CIRCUITS</p>
+                    <h2 id="circuits">0</h2>
+                    <p class="resource-rate">+<span id="circuitsRate">0</span>/sec</p>
+                </div>
+            </div>
+        </section>
+        <section class="upgrade-section">
+            <div class="panel-heading"><div><p class="eyebrow">CIRCUIT UPGRADES</p><h2>Spend Circuits</h2></div></div>
+            <div id="stage4Upgrades" class="upgrade-grid"></div>
+        </section>
+        <section class="upgrade-section">
+            <div class="panel-heading"><div><p class="eyebrow">PERMANENT</p><h2>Network Reset Shop</h2></div></div>
+            <div id="stage4ResetUpgrades" class="upgrade-grid"></div>
+        </section>
+    </section>
 
-    <!-- NOTIFICATION -->
+    <!-- STAGE 5 -->
+    <section id="stage5Panel" class="stage-panel">
+        <section class="resource-section">
+            <div class="resource-card research-card">
+                <div class="resource-icon">🔮</div>
+                <div>
+                    <p class="resource-label">CORES</p>
+                    <h2 id="cores">0</h2>
+                    <p class="resource-rate">+<span id="coresRate">0</span>/sec</p>
+                </div>
+            </div>
+        </section>
+        <section class="upgrade-section">
+            <div class="panel-heading"><div><p class="eyebrow">CORE UPGRADES</p><h2>Spend Cores</h2></div></div>
+            <div id="stage5Upgrades" class="upgrade-grid"></div>
+        </section>
+        <section class="upgrade-section">
+            <div class="panel-heading"><div><p class="eyebrow">PERMANENT</p><h2>Ascension Reset Shop — "The Last City" is here</h2></div></div>
+            <div id="stage5ResetUpgrades" class="upgrade-grid"></div>
+        </section>
+    </section>
 
-    <div id="notification" class="notification">
-        Game Saved
-    </div>
+</main>
 
+<div id="notification" class="notification">Game Saved</div>
 
-    <script src="game.js"></script>
-
+<script src="game.js"></script>
 </body>
-
 </html>
-
