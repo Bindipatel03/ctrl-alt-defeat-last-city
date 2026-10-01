@@ -742,6 +742,29 @@ body {
     margin-bottom: 18px;
 }
 
+.buy-amounts {
+    display: flex;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: #09131d;
+}
+
+.buy-amount {
+    border: 0;
+    border-right: 1px solid var(--border);
+    padding: 6px 8px;
+    color: var(--muted);
+    background: transparent;
+    font-size: 9px;
+    font-weight: 900;
+    cursor: pointer;
+}
+
+.buy-amount:last-child { border-right: 0; }
+.buy-amount:hover { color: var(--text); background: rgba(255,255,255,.05); }
+.buy-amount.active { color: #121820; background: var(--yellow); }
+
 
 .panel-heading h2 {
 
@@ -1381,6 +1404,171 @@ body {
     flex-wrap: wrap;
 }
 
+/* =========================================
+   COMMAND / UPGRADE VIEWS
+========================================= */
+
+.game-mode-tabs {
+    display: flex;
+    gap: 8px;
+    margin: 0 0 14px;
+    padding: 6px;
+    width: fit-content;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: rgba(7, 15, 24, 0.72);
+}
+
+.game-mode-tab {
+    border: 0;
+    border-radius: 8px;
+    padding: 10px 14px;
+    color: var(--muted);
+    background: transparent;
+    font: inherit;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: .4px;
+    cursor: pointer;
+    transition: .2s ease;
+}
+
+.game-mode-tab:hover { color: var(--text); background: rgba(255,255,255,.05); }
+.game-mode-tab.active { color: #10151d; background: linear-gradient(135deg, var(--yellow), var(--orange)); }
+
+.ready-badge {
+    display: inline-grid;
+    min-width: 18px;
+    height: 18px;
+    place-items: center;
+    margin-left: 5px;
+    border-radius: 99px;
+    background: #17293b;
+    color: var(--yellow);
+    font-size: 9px;
+}
+
+.game-mode-tab.active .ready-badge { background: rgba(0,0,0,.2); color: #10151d; }
+
+.milestone-panel {
+    display: grid;
+    grid-template-columns: minmax(180px, 1fr) minmax(110px, 1.35fr) auto;
+    align-items: center;
+    gap: 18px;
+    margin: 0 0 20px;
+    padding: 15px 18px;
+    border: 1px solid rgba(101, 186, 255, .25);
+    border-radius: 13px;
+    background: linear-gradient(100deg, rgba(20, 43, 62, .84), rgba(12, 22, 33, .9));
+}
+
+.milestone-copy { display: grid; gap: 4px; }
+.milestone-copy strong { font-size: 13px; }
+.milestone-copy span { color: var(--muted); font-size: 10px; }
+.milestone-progress { height: 8px; overflow: hidden; border-radius: 99px; background: #07111b; }
+.milestone-progress div { width: 0; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--blue), var(--yellow)); box-shadow: 0 0 14px rgba(101,186,255,.7); transition: width .35s ease; }
+.milestone-percent { color: var(--yellow); font-size: 13px; }
+
+body.upgrades-open .game-layout,
+body.upgrades-open .stage-panel > .resource-section,
+body.upgrades-open .stage-panel > .save-status,
+body.upgrades-open .engagement-grid,
+body.upgrades-open .badge-section,
+body.upgrades-open .rebirth-requirement,
+body.upgrades-open #rebirthButton { display: none; }
+
+body:not(.upgrades-open) .upgrade-section { display: none; }
+
+.stage-reset-dock {
+    display: none;
+    position: fixed;
+    z-index: 20;
+    right: 24px;
+    bottom: 22px;
+    width: min(330px, calc(100vw - 48px));
+    padding: 12px;
+    border: 1px solid rgba(170, 140, 255, .38);
+    border-radius: 14px;
+    background: rgba(10, 18, 29, .94);
+    box-shadow: 0 14px 40px rgba(0,0,0,.35);
+}
+
+.stage-reset-dock .rebirth-button { margin: 0; padding: 12px; }
+.stage-reset-dock p { margin: 9px 3px 1px; color: var(--muted); font-size: 10px; line-height: 1.35; }
+
+/* =========================================
+   ACTIVE PLAY, CONTRACTS & BADGES
+========================================= */
+
+.engagement-grid {
+    display: grid;
+    grid-template-columns: minmax(260px, .9fr) minmax(300px, 1.1fr);
+    gap: 18px;
+    margin-top: 20px;
+}
+
+.dispatch-card,
+.contracts-card,
+.badge-section {
+    padding: 20px;
+    border: 1px solid var(--border);
+    border-radius: 15px;
+    background: rgba(13, 23, 34, .9);
+}
+
+.dispatch-card { position: relative; overflow: hidden; background: linear-gradient(135deg, rgba(20, 52, 74, .94), rgba(12, 22, 34, .94)); }
+.dispatch-card::after { content: "📦"; position: absolute; right: -8px; bottom: -25px; opacity: .1; font-size: 120px; transform: rotate(-12deg); }
+.dispatch-topline { display: flex; justify-content: space-between; color: var(--blue); font-size: 10px; font-weight: 900; letter-spacing: 1px; }
+.dispatch-topline span:last-child { color: var(--green); }
+.dispatch-topline .recharging { color: var(--orange); }
+.dispatch-card h2 { margin: 14px 0 7px; font-size: 19px; }
+.dispatch-card p { max-width: 400px; color: var(--muted); font-size: 11px; line-height: 1.55; }
+.dispatch-card small { position: relative; z-index: 1; display: block; margin-top: 9px; color: #91a5b8; font-size: 10px; }
+
+.dispatch-button {
+    position: relative;
+    z-index: 1;
+    margin-top: 17px;
+    padding: 12px 16px;
+    border: 1px solid rgba(101,186,255,.7);
+    border-radius: 9px;
+    color: #d8f0ff;
+    background: rgba(55, 139, 194, .2);
+    font-weight: 900;
+    font-size: 10px;
+    letter-spacing: .8px;
+    cursor: pointer;
+    transition: .2s;
+}
+.dispatch-button:hover:not(:disabled) { background: rgba(55,139,194,.4); transform: translateY(-2px); box-shadow: 0 7px 20px rgba(101,186,255,.2); }
+.dispatch-button:disabled { opacity: .52; cursor: wait; }
+
+.contract-list { display: grid; gap: 8px; margin-top: 12px; }
+.contract { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 9px 10px; border: 1px solid #213649; border-radius: 9px; background: rgba(255,255,255,.018); }
+.contract > div { display: grid; gap: 3px; }
+.contract strong { font-size: 11px; }
+.contract span { color: var(--muted); font-size: 9px; }
+.contract button { border: 1px solid #425970; border-radius: 6px; padding: 6px 8px; color: #aabcca; background: transparent; font-size: 8px; font-weight: 900; white-space: nowrap; }
+.contract.complete { border-color: rgba(91,214,155,.62); background: rgba(91,214,155,.055); }
+.contract.complete button { border-color: var(--green); color: #10251e; background: var(--green); cursor: pointer; }
+.contract.claimed { opacity: .48; }
+.contract button:disabled { cursor: default; }
+
+.badge-section { margin-top: 20px; }
+.badge-progress { color: var(--yellow); font-size: 11px; font-weight: 900; }
+.achievement-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-top: 13px; }
+.achievement { display: flex; align-items: center; gap: 8px; min-height: 62px; padding: 9px; border: 1px solid #213649; border-radius: 10px; color: #697b8c; background: rgba(255,255,255,.015); filter: grayscale(1); }
+.achievement > span { font-size: 22px; }
+.achievement div { display: grid; gap: 3px; }
+.achievement strong { font-size: 10px; }
+.achievement small { font-size: 8px; line-height: 1.3; }
+.achievement.unlocked { border-color: rgba(255,194,71,.58); color: var(--text); background: linear-gradient(135deg, rgba(255,194,71,.09), rgba(255,255,255,.02)); filter: none; }
+
+@media (max-width: 900px) {
+    .engagement-grid { grid-template-columns: 1fr; }
+    .achievement-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
 .stage-tab {
     flex: 1;
     min-width: 140px;
@@ -1506,6 +1694,21 @@ body {
     background: rgba(255, 255, 255, 0.05);
 }
 
+.upgrade-card:not(:disabled) {
+    border-color: rgba(255, 194, 71, .48);
+    box-shadow: inset 0 0 20px rgba(255, 194, 71, .025);
+}
+
+.upgrade-card:not(:disabled)::after {
+    content: "READY";
+    float: right;
+    margin-top: -17px;
+    color: var(--green);
+    font-size: 8px;
+    font-weight: 900;
+    letter-spacing: 1px;
+}
+
 .upgrade-card:disabled {
     opacity: 0.4;
     cursor: not-allowed;
@@ -1539,6 +1742,26 @@ body {
 .upgrade-meta span:last-child {
     color: var(--yellow);
     font-weight: bold;
+}
+
+/* Lightweight feedback: no canvas or external assets required. */
+.fx-layer { position: fixed; inset: 0; z-index: 100; pointer-events: none; overflow: hidden; }
+.floating-gain { position: fixed; z-index: 101; color: var(--yellow); font-size: 14px; font-weight: 900; text-shadow: 0 2px 8px #000; animation: floatGain .85s ease-out forwards; }
+.spark { position: fixed; z-index: 100; width: 6px; height: 6px; border-radius: 50%; box-shadow: 0 0 8px currentColor; animation: sparkBurst .7s ease-out forwards; }
+.energy-button { overflow: hidden; }
+.energy-button::after { content: ""; position: absolute; inset: -80%; background: linear-gradient(110deg, transparent 42%, rgba(255,255,255,.18) 50%, transparent 58%); transform: translateX(-60%); transition: transform .65s ease; pointer-events: none; }
+.energy-button:hover::after { transform: translateX(60%); }
+body.upgrade-celebration .game-mode-tabs { animation: upgradePulse .5s ease-out; }
+
+@keyframes floatGain { from { opacity: 0; transform: translate(-50%, 8px) scale(.8); } 20% { opacity: 1; } to { opacity: 0; transform: translate(-50%, -54px) scale(1.1); } }
+@keyframes sparkBurst { from { opacity: 1; transform: translate(-50%, -50%) scale(1); } to { opacity: 0; transform: translate(calc(-50% + var(--x)), calc(-50% + var(--y))) scale(.15); } }
+@keyframes upgradePulse { 50% { filter: brightness(1.35); transform: scale(1.018); } }
+
+@media (max-width: 650px) {
+    .milestone-panel { grid-template-columns: 1fr auto; gap: 10px; }
+    .milestone-progress { grid-column: 1 / -1; grid-row: 2; }
+    .game-mode-tabs { width: 100%; }
+    .game-mode-tab { flex: 1; }
 }
 .offline-modal {
     position: fixed;

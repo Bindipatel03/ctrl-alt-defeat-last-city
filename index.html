@@ -30,6 +30,21 @@
         <button class="stage-tab locked" data-stage="5">5. The Ascension</button>
     </nav>
 
+    <nav class="game-mode-tabs" aria-label="Game sections">
+        <button class="game-mode-tab active" data-mode="city">⌂ Command Center</button>
+        <button class="game-mode-tab" data-mode="upgrades">✦ Upgrades <span id="upgradeReadyCount" class="ready-badge" hidden>0</span></button>
+    </nav>
+
+    <section class="milestone-panel" aria-live="polite">
+        <div class="milestone-copy">
+            <p class="eyebrow">NEXT MILESTONE</p>
+            <strong id="milestoneTitle">Build your first Scavenger Camp</strong>
+            <span id="milestoneDetail">Every purchase moves the city forward.</span>
+        </div>
+        <div class="milestone-progress"><div id="milestoneBar"></div></div>
+        <strong id="milestonePercent" class="milestone-percent">0%</strong>
+    </section>
+
     <!-- STAGE 1 -->
     <section id="stage1Panel" class="stage-panel active">
 
@@ -114,6 +129,11 @@
                     <div>
                         <p class="eyebrow">INFRASTRUCTURE</p>
                         <h2>Buildings</h2>
+                    </div>
+                    <div class="buy-amounts" aria-label="Building purchase amount">
+                        <button class="buy-amount active" data-amount="1">x1</button>
+                        <button class="buy-amount" data-amount="10">x10</button>
+                        <button class="buy-amount" data-amount="max">MAX</button>
                     </div>
                 </div>
 
@@ -215,6 +235,25 @@
             </aside>
         </section>
 
+        <section class="engagement-grid">
+            <article class="dispatch-card">
+                <div class="dispatch-topline"><span>📡 CITY DISPATCH</span><span id="dispatchStatus">READY</span></div>
+                <h2>Scavenger Supply Drop</h2>
+                <p>Call in a crate worth 25 seconds of your current Salvage income. It recharges while you play.</p>
+                <button id="dispatchButton" class="dispatch-button">CALL SUPPLY DROP</button>
+                <small id="dispatchTimer">Build your city to improve each drop.</small>
+            </article>
+            <article class="contracts-card">
+                <div class="panel-heading"><div><p class="eyebrow">CITY CONTRACTS</p><h2>Quick Wins</h2></div></div>
+                <div id="contractList" class="contract-list"></div>
+            </article>
+        </section>
+
+        <section class="badge-section">
+            <div class="panel-heading"><div><p class="eyebrow">CITY BADGES</p><h2>Rebuild Your Reputation</h2></div><span id="badgeProgress" class="badge-progress">0 / 5</span></div>
+            <div id="achievementGrid" class="achievement-grid"></div>
+        </section>
+
         <section class="upgrade-section">
             <div class="panel-heading">
                 <div>
@@ -271,7 +310,6 @@
             <div id="stage2ResetUpgrades" class="upgrade-grid"></div>
         </section>
 
-        <button id="stageResetButton" class="rebirth-button">🔄 Stage Reset (Reset Scrap)</button>
     </section>
 
     <!-- STAGE 3 -->
@@ -342,7 +380,13 @@
 
 </main>
 
+<div class="stage-reset-dock">
+    <button id="stageResetButton" class="rebirth-button">🔄 Reset Stage</button>
+    <p id="stageResetHint">Reach a stage milestone before resetting.</p>
+</div>
+
 <div id="notification" class="notification">Game Saved</div>
+<div id="fxLayer" class="fx-layer" aria-hidden="true"></div>
 
 <script src="game.js"></script>
 </body>

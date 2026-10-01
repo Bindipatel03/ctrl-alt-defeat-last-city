@@ -32,6 +32,10 @@ const defaultGame = {
         factory: 0,
         citycenter: 0
     },
+    buyAmount: 1,
+    dispatchReadyAt: 0,
+    contractsClaimed: {},
+    achievements: {},
 
     // Rebirth
     shards: 0,
@@ -154,6 +158,21 @@ const BUILDINGS = {
     citycenter: { name: "City Center",     baseCost: 3000000,output: 1200, icon: "🏙️" }
 };
 
+const CONTRACTS = {
+    firstShift: { name: "First Shift", desc: "Gather Salvage 25 times", reward: "250 Salvage", check: () => game.totalClicks >= 25, claim: () => { game.salvage += 250; } },
+    campNetwork: { name: "Camp Network", desc: "Build 5 Scavenger Camps", reward: "1 Salvage Shard", check: () => game.buildings.scavenger >= 5, claim: () => { game.shards += 1; } },
+    growingCity: { name: "Growing City", desc: "Earn 2,500 total Salvage", reward: "750 Salvage", check: () => game.totalSalvage >= 2500, claim: () => { game.salvage += 750; } },
+    workshopCrew: { name: "Workshop Crew", desc: "Build your first Workshop", reward: "2 Salvage Shards", check: () => game.buildings.workshop >= 1, claim: () => { game.shards += 2; } }
+};
+
+const ACHIEVEMENTS = {
+    handsOn: { icon: "👆", name: "Hands On", desc: "Gather Salvage 100 times", check: () => game.totalClicks >= 100 },
+    settlement: { icon: "🏕️", name: "Settlement", desc: "Own 10 buildings", check: () => totalBuildings() >= 10 },
+    skyline: { icon: "🏙️", name: "Skyline", desc: "Build a City Center", check: () => game.buildings.citycenter >= 1 },
+    reborn: { icon: "🌅", name: "Reborn", desc: "Rebirth once", check: () => game.rebirths >= 1 },
+    industrial: { icon: "🏭", name: "Industrial", desc: "Unlock The Industry", check: () => game.stage3Unlocked }
+};
+
 // =============================================
 // UPGRADE TABLES
 // =============================================
@@ -168,11 +187,11 @@ const REBIRTH_UPGRADES = {
 };
 
 const STAGE2_UPGRADES = {
-    scrapRate:     { name: "Scrap Rate",      cost: 100,   max: 20, desc: "+1 Scrap/sec" },
-    salvageBoost:  { name: "Salvage Boost",   cost: 250,   max: 10, desc: "+10% Salvage gain" },
-    survivorSpeed: { name: "Survivor Speed",  cost: 500,   max: 10, desc: "+25% Scrap gain" },
-    scrapStorage:  { name: "Scrap Storage",   cost: 1000,  max: 10, desc: "+50% max Scrap" },
-    deepSalvage:   { name: "Deep Salvage",    cost: 2500,  max: 5,  desc: "x1.5 Salvage multiplier" }
+    scrapRate:     { name: "Scrap Rate",      cost: 25,    max: 20, desc: "+1 Scrap/sec" },
+    salvageBoost:  { name: "Salvage Boost",   cost: 60,    max: 10, desc: "+10% Salvage gain" },
+    survivorSpeed: { name: "Survivor Speed",  cost: 120,   max: 10, desc: "+25% Scrap gain" },
+    scrapStorage:  { name: "Scrap Storage",   cost: 250,   max: 10, desc: "+50% max Scrap" },
+    deepSalvage:   { name: "Deep Salvage",    cost: 600,   max: 5,  desc: "x1.5 Salvage multiplier" }
 };
 
 const STAGE2_RESET_UPGRADES = {
@@ -185,11 +204,11 @@ const STAGE2_RESET_UPGRADES = {
 };
 
 const STAGE3_UPGRADES = {
-    partRate:      { name: "Part Rate",       cost: 500,   max: 20, desc: "+1 Part/sec" },
-    scrapBoost:    { name: "Scrap Boost",     cost: 1500,  max: 10, desc: "+15% Scrap gain" },
-    salvageBoost3: { name: "Salvage Boost",   cost: 5000,  max: 10, desc: "+15% Salvage gain" },
-    assemblySpeed: { name: "Assembly Speed",  cost: 15000, max: 10, desc: "+25% Part rate" },
-    autoAssembly:  { name: "Auto-Assembly",   cost: 50000, max: 1,  desc: "Passive Part gen" }
+    partRate:      { name: "Part Rate",       cost: 30,    max: 20, desc: "+1 Part/sec" },
+    scrapBoost:    { name: "Scrap Boost",     cost: 180,   max: 10, desc: "+15% Scrap gain" },
+    salvageBoost3: { name: "Salvage Boost",   cost: 450,   max: 10, desc: "+15% Salvage gain" },
+    assemblySpeed: { name: "Assembly Speed",  cost: 1000,  max: 10, desc: "+25% Part rate" },
+    autoAssembly:  { name: "Auto-Assembly",   cost: 3000,  max: 1,  desc: "Passive Part gen" }
 };
 
 const STAGE3_RESET_UPGRADES = {
@@ -202,11 +221,11 @@ const STAGE3_RESET_UPGRADES = {
 };
 
 const STAGE4_UPGRADES = {
-    circuitRate:  { name: "Circuit Rate",  cost: 5000,   max: 20, desc: "+1 Circuit/sec" },
-    partBoost:    { name: "Part Boost",    cost: 15000,  max: 10, desc: "+20% Part gain" },
-    scrapBoost4:  { name: "Scrap Boost",   cost: 50000,  max: 10, desc: "+20% Scrap gain" },
-    salvageBoost4:{ name: "Salvage Boost", cost: 150000, max: 10, desc: "+20% Salvage gain" },
-    autoNetwork:  { name: "Auto-Network",  cost: 500000, max: 1,  desc: "Passive Circuit gen" }
+    circuitRate:  { name: "Circuit Rate",  cost: 60,     max: 20, desc: "+1 Circuit/sec" },
+    partBoost:    { name: "Part Boost",    cost: 500,    max: 10, desc: "+20% Part gain" },
+    scrapBoost4:  { name: "Scrap Boost",   cost: 1200,   max: 10, desc: "+20% Scrap gain" },
+    salvageBoost4:{ name: "Salvage Boost", cost: 3000,   max: 10, desc: "+20% Salvage gain" },
+    autoNetwork:  { name: "Auto-Network",  cost: 8000,   max: 1,  desc: "Passive Circuit gen" }
 };
 
 const STAGE4_RESET_UPGRADES = {
@@ -219,12 +238,12 @@ const STAGE4_RESET_UPGRADES = {
 };
 
 const STAGE5_UPGRADES = {
-    coreRate:     { name: "Core Rate",      cost: 50000,   max: 20, desc: "+1 Core/sec" },
-    totalSalvage: { name: "Total Salvage",  cost: 50000,   max: 10, desc: "+50% Salvage" },
-    totalScrap:   { name: "Total Scrap",    cost: 150000,  max: 10, desc: "+50% Scrap" },
-    totalPart:    { name: "Total Part",     cost: 500000,  max: 10, desc: "+50% Parts" },
-    totalCircuit: { name: "Total Circuit",  cost: 1500000, max: 10, desc: "+50% Circuits" },
-    ascension:    { name: "Ascension",      cost: 50000000,max: 1,  desc: "x2 ALL currencies" }
+    coreRate:     { name: "Core Rate",      cost: 100,     max: 20, desc: "+1 Core/sec" },
+    totalSalvage: { name: "Total Salvage",  cost: 400,     max: 10, desc: "+50% Salvage" },
+    totalScrap:   { name: "Total Scrap",    cost: 1000,    max: 10, desc: "+50% Scrap" },
+    totalPart:    { name: "Total Part",     cost: 2500,    max: 10, desc: "+50% Parts" },
+    totalCircuit: { name: "Total Circuit",  cost: 6000,    max: 10, desc: "+50% Circuits" },
+    ascension:    { name: "Ascension",      cost: 20000,   max: 1,  desc: "x2 ALL currencies" }
 };
 
 const STAGE5_RESET_UPGRADES = {
@@ -268,6 +287,8 @@ const stage2ResetsDisplay = el("stage2Resets");
 const energyButton = el("energyButton");
 const rebirthButton = el("rebirthButton");
 const stageResetButton = el("stageResetButton");
+const dispatchButton = el("dispatchButton");
+const buyAmountButtons = document.querySelectorAll(".buy-amount");
 
 const saveButton = el("saveButton");
 const resetButton = el("resetButton");
@@ -276,8 +297,14 @@ const notification = el("notification");
 
 const stageTabs = document.querySelectorAll(".stage-tab");
 const stagePanels = document.querySelectorAll(".stage-panel");
+const gameModeTabs = document.querySelectorAll(".game-mode-tab");
 
 let currentStageView = 1;
+let currentGameMode = "city";
+
+function totalBuildings() {
+    return Object.values(game.buildings).reduce((sum, count) => sum + count, 0);
+}
 
 // =============================================
 // COST & PRODUCTION
@@ -287,7 +314,22 @@ function getBuildingCost(type) {
     const def = BUILDINGS[type];
     const owned = game.buildings[type] || 0;
     const discount = 1 - (game.rebirthUpgrades.cheapBuild * 0.10);
-    return Math.floor(def.baseCost * Math.pow(1.15, owned) * discount);
+    return Math.floor(def.baseCost * Math.pow(1.12, owned) * discount);
+}
+
+function getBuildingBatch(type) {
+    const requested = game.buyAmount === "max" ? Infinity : Number(game.buyAmount || 1);
+    let count = 0;
+    let total = 0;
+    let nextCost = getBuildingCost(type);
+    while (count < requested && total + nextCost <= game.salvage) {
+        total += nextCost;
+        count++;
+        const def = BUILDINGS[type];
+        const discount = 1 - (game.rebirthUpgrades.cheapBuild * 0.10);
+        nextCost = Math.floor(def.baseCost * Math.pow(1.12, game.buildings[type] + count) * discount);
+    }
+    return { count, total, nextCost };
 }
 
 function getSalvageMultiplier() {
@@ -321,7 +363,8 @@ function getSalvagePerSecond() {
 
 function getScrapPerSecond() {
     if (!game.stage2Unlocked) return 0;
-    let base = game.stage2Upgrades.scrapRate * 1;
+    // Every newly unlocked stage has a small starter trickle, avoiding a dead start.
+    let base = 1 + game.stage2Upgrades.scrapRate;
     base *= 1 + (game.stage2Upgrades.survivorSpeed * 0.25);
     base *= 1 + (game.stage2ResetUpgrades.scrapIncome * 0.25);
     base *= 1 + (game.stage2ResetUpgrades.survivorSpeed2 * 0.25);
@@ -339,7 +382,7 @@ function getScrapPerSecond() {
 
 function getPartsPerSecond() {
     if (!game.stage3Unlocked) return 0;
-    let base = game.stage3Upgrades.partRate * 1;
+    let base = 1 + game.stage3Upgrades.partRate;
     base *= 1 + (game.stage3Upgrades.assemblySpeed * 0.25);
     base *= 1 + (game.stage3ResetUpgrades.partIncome * 0.25);
     if (game.stage3ResetUpgrades.autoAssembly2 > 0) base += 1;
@@ -354,7 +397,7 @@ function getPartsPerSecond() {
 
 function getCircuitsPerSecond() {
     if (!game.stage4Unlocked) return 0;
-    let base = game.stage4Upgrades.circuitRate * 1;
+    let base = 1 + game.stage4Upgrades.circuitRate;
     base *= 1 + (game.stage4ResetUpgrades.circuitIncome * 0.25);
     if (game.stage4ResetUpgrades.autoNetwork2 > 0) base += 1;
     if (game.stage4ResetUpgrades.networkLegacy > 0) base *= 2;
@@ -366,7 +409,7 @@ function getCircuitsPerSecond() {
 
 function getCoresPerSecond() {
     if (!game.stage5Unlocked) return 0;
-    let base = game.stage5Upgrades.coreRate * 1;
+    let base = 1 + game.stage5Upgrades.coreRate;
     base *= 1 + (game.stage5ResetUpgrades.coreIncome * 0.25);
     if (game.stage5ResetUpgrades.autoAscension > 0) base += 1;
     if (game.stage5ResetUpgrades.ascensionLegacy > 0) base *= 2;
@@ -380,11 +423,11 @@ function getCoresPerSecond() {
 // =============================================
 
 function isWallReached() {
-    if (game.buildings.citycenter < 8) return false;
+    if (game.buildings.citycenter < 4) return false;
     const nextCost = getBuildingCost("citycenter");
     const income = getSalvagePerSecond();
     if (income === 0) return true;
-    return (nextCost / income) > 60;
+    return (nextCost / income) > 30;
 }
 
 // =============================================
@@ -399,7 +442,7 @@ function getRebirthRequirement() {
         return {
             name: "Reach the Progress Wall",
             check: () => isWallReached(),
-            display: () => isWallReached() ? "✅ Wall reached" : "❌ Wall not reached (8 City Centers + 60s income wait)"
+            display: () => isWallReached() ? "✅ Wall reached" : "❌ Wall not reached (4 City Centers + 30s income wait)"
         };
     }
 
@@ -416,36 +459,36 @@ function getRebirthRequirement() {
         };
     }
 
-    // Rebirth 3: wall + 1 Power Plant + 100K total Salvage
+    // Rebirth 3: a modest mid-run target before Stage 2 unlocks.
     if (r === 2) {
         return {
-            name: "Rebirth 3 — Power Plant + 100K Salvage",
-            check: () => isWallReached() && game.buildings.power >= 1 && game.totalSalvage >= 100000,
+            name: "Rebirth 3 — Power Plant + 50K Salvage",
+            check: () => isWallReached() && game.buildings.power >= 1 && game.totalSalvage >= 50000,
             display: () => {
                 const wall = isWallReached() ? "✅" : "❌";
                 const pow = game.buildings.power >= 1 ? "✅" : "❌";
-                const sal = game.totalSalvage >= 100000 ? "✅" : "❌";
-                return `${wall} Wall  |  ${pow} Power Plant  |  ${sal} 100K Salvage`;
+                const sal = game.totalSalvage >= 50000 ? "✅" : "❌";
+                return `${wall} Wall  |  ${pow} Power Plant  |  ${sal} 50K Salvage`;
             }
         };
     }
 
-    // Rebirth 4: wall + 3 Factories + 500K total Salvage
+    // Rebirth 4: a short step up, then gentle scaling.
     if (r === 3) {
         return {
-            name: "Rebirth 4 — 3 Factories + 500K Salvage",
-            check: () => isWallReached() && game.buildings.factory >= 3 && game.totalSalvage >= 500000,
+            name: "Rebirth 4 — 2 Factories + 150K Salvage",
+            check: () => isWallReached() && game.buildings.factory >= 2 && game.totalSalvage >= 150000,
             display: () => {
                 const wall = isWallReached() ? "✅" : "❌";
-                const fac = game.buildings.factory >= 3 ? "✅" : "❌";
-                const sal = game.totalSalvage >= 500000 ? "✅" : "❌";
-                return `${wall} Wall  |  ${fac} Factory (${game.buildings.factory}/3)  |  ${sal} 500K Salvage`;
+                const fac = game.buildings.factory >= 2 ? "✅" : "❌";
+                const sal = game.totalSalvage >= 150000 ? "✅" : "❌";
+                return `${wall} Wall  |  ${fac} Factory (${game.buildings.factory}/2)  |  ${sal} 150K Salvage`;
             }
         };
     }
 
-    // Rebirth 5+: scale Salvage requirement ×2 each rebirth
-    const requiredSalvage = 500000 * Math.pow(2, r - 3);
+    // Rebirth 5+: gentle 1.5× scaling keeps late loops achievable.
+    const requiredSalvage = 225000 * Math.pow(1.5, r - 4);
     return {
         name: `Rebirth ${r + 1} — 3 Factories + ${(requiredSalvage / 1000).toFixed(0)}K Salvage`,
         check: () => isWallReached() && game.buildings.factory >= 3 && game.totalSalvage >= requiredSalvage,
@@ -463,14 +506,15 @@ function getRebirthRequirement() {
 // =============================================
 
 function buyBuilding(type) {
-    const cost = getBuildingCost(type);
-    if (game.salvage < cost) {
+    const batch = getBuildingBatch(type);
+    if (batch.count === 0) {
         showNotification("Not enough Salvage!");
         return;
     }
-    game.salvage -= cost;
-    game.buildings[type]++;
-    showNotification(BUILDINGS[type].name + " constructed!");
+    game.salvage -= batch.total;
+    game.buildings[type] += batch.count;
+    showNotification(`${BUILDINGS[type].name} ×${batch.count} constructed!`);
+    spawnBurst(el("buy" + type.charAt(0).toUpperCase() + type.slice(1)), "#65baff", 12);
     updateGame();
     saveGame(false);
 }
@@ -490,6 +534,14 @@ function setupBuildingButtons() {
         btn.addEventListener("click", () => buyBuilding(type));
     });
 }
+
+buyAmountButtons.forEach(button => {
+    button.addEventListener("click", () => {
+        game.buyAmount = button.dataset.amount === "max" ? "max" : Number(button.dataset.amount);
+        buyAmountButtons.forEach(b => b.classList.toggle("active", b === button));
+        updateGame();
+    });
+});
 
 // =============================================
 // REBIRTH
@@ -550,58 +602,77 @@ function doRebirth() {
 // =============================================
 
 function doStage2Reset() {
-    game.scrapTokens += 2;
+    if (!canStageReset(2)) return showNotification("Build 3 Scrap Rate levels before resetting.");
+    game.scrapTokens += 3;
     game.stage2Resets++;
     game.scrap = 0;
     game.stage2Upgrades = { scrapRate: 0, salvageBoost: 0, survivorSpeed: 0, scrapStorage: 0, deepSalvage: 0 };
-    if (game.stage2Resets >= 5 && !game.stage3Unlocked) {
+    if (game.stage2Resets >= 3 && !game.stage3Unlocked) {
         game.stage3Unlocked = true;
         showNotification("STAGE 3 UNLOCKED: The Industry!");
     } else {
-        showNotification("Stage 2 Reset! +2 Settlement Tokens");
+        showNotification("Stage 2 Reset! +3 Settlement Tokens");
     }
     updateGame();
     saveGame(false);
 }
 
 function doStage3Reset() {
-    game.partTokens += 2;
+    if (!canStageReset(3)) return showNotification("Build 3 Part Rate levels before resetting.");
+    game.partTokens += 3;
     game.stage3Resets++;
     game.parts = 0;
     game.stage3Upgrades = { partRate: 0, scrapBoost: 0, salvageBoost3: 0, assemblySpeed: 0, autoAssembly: 0 };
-    if (game.stage3Resets >= 7 && !game.stage4Unlocked) {
+    if (game.stage3Resets >= 4 && !game.stage4Unlocked) {
         game.stage4Unlocked = true;
         showNotification("STAGE 4 UNLOCKED: The Network!");
     } else {
-        showNotification("Stage 3 Reset! +2 Industry Tokens");
+        showNotification("Stage 3 Reset! +3 Industry Tokens");
     }
     updateGame();
     saveGame(false);
 }
 
 function doStage4Reset() {
-    game.networkTokens += 2;
+    if (!canStageReset(4)) return showNotification("Build 3 Circuit Rate levels before resetting.");
+    game.networkTokens += 3;
     game.stage4Resets++;
     game.circuits = 0;
     game.stage4Upgrades = { circuitRate: 0, partBoost: 0, scrapBoost4: 0, salvageBoost4: 0, autoNetwork: 0 };
-    if (game.stage4Resets >= 10 && !game.stage5Unlocked) {
+    if (game.stage4Resets >= 5 && !game.stage5Unlocked) {
         game.stage5Unlocked = true;
         showNotification("STAGE 5 UNLOCKED: The Ascension!");
     } else {
-        showNotification("Stage 4 Reset! +2 Network Tokens");
+        showNotification("Stage 4 Reset! +3 Network Tokens");
     }
     updateGame();
     saveGame(false);
 }
 
 function doStage5Reset() {
-    game.ascensionTokens += 2;
+    if (!canStageReset(5)) return showNotification("Build 3 Core Rate levels before resetting.");
+    game.ascensionTokens += 3;
     game.stage5Resets++;
     game.cores = 0;
     game.stage5Upgrades = { coreRate: 0, totalSalvage: 0, totalScrap: 0, totalPart: 0, totalCircuit: 0, ascension: 0 };
-    showNotification("Stage 5 Reset! +2 Ascension Tokens");
+    showNotification("Stage 5 Reset! +3 Ascension Tokens");
     updateGame();
     saveGame(false);
+}
+
+function canStageReset(stage) {
+    const levels = { 2: game.stage2Upgrades.scrapRate, 3: game.stage3Upgrades.partRate, 4: game.stage4Upgrades.circuitRate, 5: game.stage5Upgrades.coreRate };
+    return levels[stage] >= 3;
+}
+
+function getStageResetInfo(stage) {
+    const resetData = {
+        2: { name: "Settlement", count: game.stage2Resets, target: 3, level: game.stage2Upgrades.scrapRate, rate: "Scrap Rate", next: "Stage 3" },
+        3: { name: "Industry", count: game.stage3Resets, target: 4, level: game.stage3Upgrades.partRate, rate: "Part Rate", next: "Stage 4" },
+        4: { name: "Network", count: game.stage4Resets, target: 5, level: game.stage4Upgrades.circuitRate, rate: "Circuit Rate", next: "Stage 5" },
+        5: { name: "Ascension", count: game.stage5Resets, target: 5, level: game.stage5Upgrades.coreRate, rate: "Core Rate", next: "permanent power" }
+    };
+    return resetData[stage];
 }
 
 // =============================================
@@ -618,6 +689,7 @@ function buyRebirthUpgrade(key) {
     game.shards -= def.cost;
     game.rebirthUpgrades[key]++;
     showNotification(`${def.name} upgraded!`);
+    celebrateUpgrade();
     updateGame();
     saveGame(false);
 }
@@ -642,6 +714,7 @@ function buyUpgrade(stage, key) {
     if (stage === 5) game.cores -= def.cost;
     t.state[key]++;
     showNotification(`${def.name} upgraded!`);
+    celebrateUpgrade();
     updateGame();
     saveGame(false);
 }
@@ -672,6 +745,7 @@ function buyResetUpgrade(stage, key) {
     } else {
         showNotification(`${def.name} upgraded!`);
     }
+    celebrateUpgrade();
     updateGame();
     saveGame(false);
 }
@@ -686,10 +760,37 @@ energyButton.addEventListener("click", function () {
     game.salvage += click;
     game.totalSalvage += click;
     game.totalClicks++;
+    showFloatingGain(energyButton, `+${formatNumber(click)} ⚙️`);
+    spawnBurst(energyButton, "#ffc247", 10);
     energyButton.style.transform = "scale(0.95)";
     setTimeout(() => energyButton.style.transform = "", 80);
     updateGame();
 });
+
+dispatchButton.addEventListener("click", () => {
+    const now = Date.now();
+    if (now < game.dispatchReadyAt) return;
+    const reward = Math.max(40, getSalvagePerSecond() * 25);
+    game.salvage += reward;
+    game.totalSalvage += reward;
+    game.dispatchReadyAt = now + 60000;
+    showFloatingGain(dispatchButton, `+${formatNumber(reward)} ⚙️`);
+    spawnBurst(dispatchButton, "#65baff", 18);
+    showNotification("Supply drop secured!");
+    updateGame();
+    saveGame(false);
+});
+
+function claimContract(key) {
+    const contract = CONTRACTS[key];
+    if (!contract || game.contractsClaimed[key] || !contract.check()) return;
+    contract.claim();
+    game.contractsClaimed[key] = true;
+    celebrateUpgrade();
+    showNotification(`Contract complete: ${contract.reward}!`);
+    updateGame();
+    saveGame(false);
+}
 
 rebirthButton.addEventListener("click", doRebirth);
 stageResetButton.addEventListener("click", function () {
@@ -707,15 +808,24 @@ stageTabs.forEach(tab => {
     tab.addEventListener("click", function () {
         const stage = parseInt(tab.dataset.stage);
         if (stage === 2 && !game.stage2Unlocked) return showNotification("Locked! Rebirth 3 times.");
-        if (stage === 3 && !game.stage3Unlocked) return showNotification("Locked! Reset Stage 2 five times.");
-        if (stage === 4 && !game.stage4Unlocked) return showNotification("Locked! Reset Stage 3 seven times.");
-        if (stage === 5 && !game.stage5Unlocked) return showNotification("Locked! Reset Stage 4 ten times.");
+        if (stage === 3 && !game.stage3Unlocked) return showNotification("Locked! Reset Stage 2 three times.");
+        if (stage === 4 && !game.stage4Unlocked) return showNotification("Locked! Reset Stage 3 four times.");
+        if (stage === 5 && !game.stage5Unlocked) return showNotification("Locked! Reset Stage 4 five times.");
 
         currentStageView = stage;
         stageTabs.forEach(t => t.classList.remove("active"));
         stagePanels.forEach(p => p.classList.remove("active"));
         tab.classList.add("active");
         el(`stage${stage}Panel`).classList.add("active");
+        updateGame();
+    });
+});
+
+gameModeTabs.forEach(tab => {
+    tab.addEventListener("click", () => {
+        currentGameMode = tab.dataset.mode;
+        document.body.classList.toggle("upgrades-open", currentGameMode === "upgrades");
+        gameModeTabs.forEach(t => t.classList.toggle("active", t === tab));
         updateGame();
     });
 });
@@ -819,6 +929,13 @@ function gameLoop() {
         showNotification("⚠️ PROGRESS WALL REACHED — Rebirth available!");
     }
 
+    Object.entries(ACHIEVEMENTS).forEach(([key, badge]) => {
+        if (!game.achievements[key] && badge.check()) {
+            game.achievements[key] = true;
+            showNotification(`Badge unlocked: ${badge.name}!`);
+        }
+    });
+
     updateGame();
 }
 
@@ -830,6 +947,10 @@ setInterval(() => saveGame(false), 5000);
 // =============================================
 
 function updateGame() {
+    buyAmountButtons.forEach(button => {
+        const amount = button.dataset.amount === "max" ? "max" : Number(button.dataset.amount);
+        button.classList.toggle("active", amount === game.buyAmount);
+    });
     salvageDisplay.textContent  = Math.floor(game.salvage).toLocaleString();
     scrapDisplay.textContent    = Math.floor(game.scrap).toLocaleString();
     partsDisplay.textContent    = Math.floor(game.parts).toLocaleString();
@@ -865,18 +986,22 @@ function updateGame() {
     Object.keys(BUILDINGS).forEach(type => {
         const cost = getBuildingCost(type);
         const owned = game.buildings[type];
+        const batch = getBuildingBatch(type);
 
         const ownedEl = el(type + "Owned");
         if (ownedEl) ownedEl.textContent = owned;
 
         const costEl1 = el(type + "Cost");
         const costEl2 = el(type + "Cost2");
-        if (costEl1) costEl1.textContent = cost.toLocaleString();
-        if (costEl2) costEl2.textContent = cost.toLocaleString();
+        if (costEl1) costEl1.textContent = game.buyAmount === 1 ? cost.toLocaleString() : (batch.count ? batch.total.toLocaleString() : cost.toLocaleString());
+        if (costEl2) costEl2.textContent = game.buyAmount === 1 ? cost.toLocaleString() : (batch.count ? batch.total.toLocaleString() : cost.toLocaleString());
 
         const btnId = "buy" + type.charAt(0).toUpperCase() + type.slice(1);
         const btn = el(btnId);
-        if (btn) btn.disabled = game.salvage < cost;
+        if (btn) {
+            btn.disabled = batch.count === 0;
+            btn.firstChild.textContent = game.buyAmount === "max" ? "Build MAX " : `Build ×${game.buyAmount} `;
+        }
     });
 
     // Rebirth button + requirement display
@@ -901,7 +1026,16 @@ function updateGame() {
 
     // Stage reset button
     if (stageResetButton) {
-        stageResetButton.style.display = currentStageView >= 2 ? "block" : "none";
+        const showReset = currentGameMode === "upgrades" && currentStageView >= 2;
+        const info = currentStageView >= 2 ? getStageResetInfo(currentStageView) : null;
+        stageResetButton.parentElement.style.display = showReset ? "block" : "none";
+        if (info) {
+            stageResetButton.disabled = !canStageReset(currentStageView);
+            stageResetButton.textContent = `🔄 ${info.name} Reset (+3 Tokens)`;
+            el("stageResetHint").textContent = canStageReset(currentStageView)
+                ? `${info.rate} milestone complete. Resets: ${info.count}/${info.target} to unlock ${info.next}.`
+                : `Raise ${info.rate} to Lv 3 to reset (${info.level}/3).`;
+        }
     }
 
     // Upgrade shops
@@ -911,6 +1045,11 @@ function updateGame() {
     if (currentStageView === 4) renderStageUpgrades(4, STAGE4_UPGRADES, game.stage4Upgrades, "circuits");
     if (currentStageView === 5) renderStageUpgrades(5, STAGE5_UPGRADES, game.stage5Upgrades, "cores");
     renderResetUpgrades();
+    updateMilestone();
+    updateUpgradeReadyCount();
+    renderDispatch();
+    renderContracts();
+    renderAchievements();
 
     // Tab locks
     stageTabs.forEach(tab => {
@@ -926,6 +1065,89 @@ function updateGame() {
     if (saveStatus) {
         saveStatus.textContent = `Rebirths: ${game.rebirths} | Stage 2 Resets: ${game.stage2Resets}`;
     }
+}
+
+function renderDispatch() {
+    if (!dispatchButton) return;
+    const now = Date.now();
+    const remaining = Math.max(0, Math.ceil((game.dispatchReadyAt - now) / 1000));
+    const ready = remaining === 0;
+    dispatchButton.disabled = !ready;
+    el("dispatchStatus").textContent = ready ? "READY" : "RECHARGING";
+    el("dispatchStatus").classList.toggle("recharging", !ready);
+    dispatchButton.textContent = ready ? "CALL SUPPLY DROP" : `SUPPLY DROP IN ${remaining}s`;
+    el("dispatchTimer").textContent = ready
+        ? `Current payload: ${formatNumber(Math.max(40, getSalvagePerSecond() * 25))} Salvage`
+        : "Your crew is preparing the next crate.";
+}
+
+function renderContracts() {
+    const container = el("contractList");
+    if (!container) return;
+    container.innerHTML = "";
+    Object.entries(CONTRACTS).forEach(([key, contract]) => {
+        const claimed = !!game.contractsClaimed[key];
+        const complete = contract.check();
+        const item = document.createElement("div");
+        item.className = `contract ${claimed ? "claimed" : complete ? "complete" : ""}`;
+        item.innerHTML = `<div><strong>${contract.name}</strong><span>${contract.desc}</span></div><button ${(!complete || claimed) ? "disabled" : ""}>${claimed ? "CLAIMED" : complete ? `CLAIM ${contract.reward}` : contract.reward}</button>`;
+        const button = item.querySelector("button");
+        if (complete && !claimed) button.onclick = () => claimContract(key);
+        container.appendChild(item);
+    });
+}
+
+function renderAchievements() {
+    const container = el("achievementGrid");
+    if (!container) return;
+    const unlocked = Object.keys(ACHIEVEMENTS).filter(key => game.achievements[key]).length;
+    el("badgeProgress").textContent = `${unlocked} / ${Object.keys(ACHIEVEMENTS).length}`;
+    container.innerHTML = "";
+    Object.entries(ACHIEVEMENTS).forEach(([key, badge]) => {
+        const unlockedBadge = !!game.achievements[key];
+        const card = document.createElement("div");
+        card.className = `achievement ${unlockedBadge ? "unlocked" : ""}`;
+        card.innerHTML = `<span>${unlockedBadge ? badge.icon : "🔒"}</span><div><strong>${badge.name}</strong><small>${badge.desc}</small></div>`;
+        container.appendChild(card);
+    });
+}
+
+function updateMilestone() {
+    const title = el("milestoneTitle");
+    const detail = el("milestoneDetail");
+    const bar = el("milestoneBar");
+    const percent = el("milestonePercent");
+    if (!title || !detail || !bar || !percent) return;
+    let progress = 0;
+    if (currentStageView === 1) {
+        const req = getRebirthRequirement();
+        progress = Math.min(100, (game.buildings.citycenter / 4) * 70 + (isWallReached() ? 30 : 0));
+        title.textContent = req.name;
+        detail.textContent = req.display().replace(/✅|❌/g, "").replace(/\s+\|\s+/g, " · ");
+    } else {
+        const info = getStageResetInfo(currentStageView);
+        progress = Math.min(100, (info.level / 3) * 65 + (info.count / info.target) * 35);
+        title.textContent = `${info.name} Reset — unlock ${info.next}`;
+        detail.textContent = `${info.rate} Lv ${info.level}/3 · Resets ${info.count}/${info.target}`;
+    }
+    const rounded = Math.floor(progress);
+    bar.style.width = `${rounded}%`;
+    percent.textContent = `${rounded}%`;
+}
+
+function updateUpgradeReadyCount() {
+    const badge = el("upgradeReadyCount");
+    if (!badge) return;
+    const shops = [
+        [REBIRTH_UPGRADES, game.rebirthUpgrades, game.shards],
+        [STAGE2_UPGRADES, game.stage2Upgrades, game.scrap], [STAGE2_RESET_UPGRADES, game.stage2ResetUpgrades, game.scrapTokens],
+        [STAGE3_UPGRADES, game.stage3Upgrades, game.parts], [STAGE3_RESET_UPGRADES, game.stage3ResetUpgrades, game.partTokens],
+        [STAGE4_UPGRADES, game.stage4Upgrades, game.circuits], [STAGE4_RESET_UPGRADES, game.stage4ResetUpgrades, game.networkTokens],
+        [STAGE5_UPGRADES, game.stage5Upgrades, game.cores], [STAGE5_RESET_UPGRADES, game.stage5ResetUpgrades, game.ascensionTokens]
+    ];
+    const ready = shops.reduce((sum, [table, state, currency]) => sum + Object.entries(table).filter(([key, def]) => state[key] < def.max && currency >= def.cost).length, 0);
+    badge.hidden = ready === 0;
+    badge.textContent = ready > 9 ? "9+" : ready;
 }
 
 // =============================================
@@ -1035,6 +1257,8 @@ function loadGame() {
             ...defaultGame,
             ...loaded,
             buildings: { ...defaultGame.buildings, ...(loaded.buildings || {}) },
+            contractsClaimed: { ...defaultGame.contractsClaimed, ...(loaded.contractsClaimed || {}) },
+            achievements: { ...defaultGame.achievements, ...(loaded.achievements || {}) },
             rebirthUpgrades: { ...defaultGame.rebirthUpgrades, ...(loaded.rebirthUpgrades || {}) },
             stage2Upgrades: { ...defaultGame.stage2Upgrades, ...(loaded.stage2Upgrades || {}) },
             stage2ResetUpgrades: { ...defaultGame.stage2ResetUpgrades, ...(loaded.stage2ResetUpgrades || {}) },
@@ -1066,6 +1290,49 @@ resetButton.addEventListener("click", () => {
 // =============================================
 // NOTIFICATION
 // =============================================
+
+function formatNumber(value) {
+    return value >= 1000 ? Math.floor(value).toLocaleString() : Number(value.toFixed(1)).toString();
+}
+
+function showFloatingGain(anchor, text) {
+    const layer = el("fxLayer");
+    if (!layer || !anchor) return;
+    const rect = anchor.getBoundingClientRect();
+    const gain = document.createElement("span");
+    gain.className = "floating-gain";
+    gain.textContent = text;
+    gain.style.left = `${rect.left + rect.width / 2 + (Math.random() - 0.5) * 36}px`;
+    gain.style.top = `${rect.top + 12}px`;
+    layer.appendChild(gain);
+    gain.addEventListener("animationend", () => gain.remove());
+}
+
+function spawnBurst(anchor, color, amount = 8) {
+    const layer = el("fxLayer");
+    if (!layer || !anchor) return;
+    const rect = anchor.getBoundingClientRect();
+    for (let i = 0; i < amount; i++) {
+        const particle = document.createElement("i");
+        particle.className = "spark";
+        particle.style.left = `${rect.left + rect.width / 2}px`;
+        particle.style.top = `${rect.top + rect.height / 2}px`;
+        particle.style.background = color;
+        particle.style.setProperty("--x", `${(Math.random() - 0.5) * 150}px`);
+        particle.style.setProperty("--y", `${-20 - Math.random() * 110}px`);
+        particle.style.animationDelay = `${Math.random() * 80}ms`;
+        layer.appendChild(particle);
+        particle.addEventListener("animationend", () => particle.remove());
+    }
+}
+
+function celebrateUpgrade() {
+    const anchor = document.querySelector(".upgrade-card:not(:disabled)") || document.querySelector(".game-mode-tabs");
+    spawnBurst(anchor, "#aa8cff", 14);
+    document.body.classList.remove("upgrade-celebration");
+    void document.body.offsetWidth;
+    document.body.classList.add("upgrade-celebration");
+}
 
 function showNotification(msg) {
     notification.textContent = msg;
