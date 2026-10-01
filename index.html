@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Last City | CTRL + ALT + DEFEAT</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="cyberpunk.css">
 </head>
 <body>
 
@@ -15,6 +16,7 @@
         <p class="tagline">Rebuild Civilization One Click at a Time</p>
     </div>
     <div class="header-buttons">
+        <button id="soundButton" class="secondary-button" aria-pressed="true">🔊 Sound</button>
         <button id="saveButton" class="secondary-button">💾 Save</button>
         <button id="resetButton" class="danger-button">↻ Reset</button>
     </div>
@@ -33,6 +35,8 @@
     <nav class="game-mode-tabs" aria-label="Game sections">
         <button class="game-mode-tab active" data-mode="city">⌂ Command Center</button>
         <button class="game-mode-tab" data-mode="upgrades">✦ Upgrades <span id="upgradeReadyCount" class="ready-badge" hidden>0</span></button>
+        <button class="game-mode-tab" data-mode="stats">▦ Statistics</button>
+        <button class="game-mode-tab" data-mode="companions">🥚 Companions</button>
     </nav>
 
     <section class="milestone-panel" aria-live="polite">
@@ -44,11 +48,15 @@
         <div class="milestone-progress"><div id="milestoneBar"></div></div>
         <strong id="milestonePercent" class="milestone-percent">0%</strong>
     </section>
+    <div id="tutorialHint" class="tutorial-hint">Tip: gather Salvage, then invest it in your first Camp.</div>
+    <div id="autoSaveIndicator" class="auto-save-indicator">● Auto-save ready</div>
+    <section id="companionPanel" class="companion-panel" aria-label="Eggs and companions"></section>
 
     <!-- STAGE 1 -->
     <section id="stage1Panel" class="stage-panel active">
+        <div id="zone1" class="zone-mount"></div>
 
-        <section class="resource-section">
+        <section class="resource-section" aria-label="Ruins resource dashboard">
             <div class="resource-card energy-card">
                 <div class="resource-icon">⚙️</div>
                 <div>
@@ -82,6 +90,7 @@
                 </div>
             </div>
         </section>
+        <div id="nextPurchase1" class="next-purchase"></div>
 
         <section class="game-layout">
             <div class="city-panel">
@@ -90,15 +99,21 @@
                         <p class="eyebrow">STAGE 1</p>
                         <h2>The Ruins</h2>
                     </div>
-                    <div class="city-level">
-                        <span>SALVAGE/SEC</span>
-                        <strong id="salvageRateTop">0</strong>
+                    <div class="city-level-group">
+                        <div class="city-level">
+                            <span>SALVAGE/SEC</span>
+                            <strong id="salvageRateTop">0</strong>
+                        </div>
+                        <div class="city-level population-level">
+                            <span>POPULATION</span>
+                            <strong id="population">0</strong>
+                        </div>
                     </div>
                 </div>
 
                 <div class="city-visual" id="cityVisual">🏕️</div>
                 <p class="city-description" id="cityDescription">
-                    Click to gather Salvage. Build. Hit the wall. Rebirth.
+                    Gather Salvage. Grow your city. Build 4 City Centers to begin a new legacy.
                 </p>
 
                 <button id="energyButton" class="energy-button">
@@ -107,19 +122,21 @@
                     <small>+<span id="clickPowerStat">1</span></small>
                 </button>
 
+                <div class="combo-meter" aria-live="polite">
+                    <div class="combo-copy"><span>⚡ MOMENTUM</span><strong id="comboCount">0x</strong></div>
+                    <div class="combo-track"><div id="comboBar"></div></div>
+                    <small id="comboBonus">Keep clicking for +0% click power</small>
+                </div>
+
                 <div class="click-stats">
                     <div>
-                        <span>TOTAL CLICKS</span>
-                        <strong id="totalClicks2">0</strong>
-                    </div>
-                    <div>
-                        <span>TOTAL SALVAGE</span>
-                        <strong id="totalSalvage">0</strong>
+                        <span>WORKFORCE BONUS</span>
+                        <strong id="workforceBonus">+0%</strong>
                     </div>
                 </div>
 
                 <button id="rebirthButton" class="rebirth-button" style="margin-top:20px;">
-                    🌅 Rebirth (wall not reached)
+                    🌅 City Renewal — Build 4 City Centers
                 </button>
                 <div id="rebirthRequirement" class="rebirth-requirement"></div>
             </div>
@@ -200,7 +217,7 @@
                 <div class="building-card">
                     <div class="building-top">
                         <div class="building-icon solar-icon">⚡</div>
-                        <div><h3>Power Plant</h3><p>×1.25 all Salvage/sec</p></div>
+                        <div><h3>Power Plant</h3><p>×1.18 all Salvage/sec</p></div>
                     </div>
                     <div class="building-stats">
                         <span>Owned <strong id="powerOwned">0</strong></span>
@@ -250,8 +267,20 @@
         </section>
 
         <section class="badge-section">
-            <div class="panel-heading"><div><p class="eyebrow">CITY BADGES</p><h2>Rebuild Your Reputation</h2></div><span id="badgeProgress" class="badge-progress">0 / 5</span></div>
+            <div class="panel-heading"><div><p class="eyebrow">CITY BADGES</p><h2>Rebuild Your Reputation</h2></div><span id="badgeProgress" class="badge-progress">0 / 25</span></div>
             <div id="achievementGrid" class="achievement-grid"></div>
+        </section>
+
+        <aside class="upgrade-sidebar" aria-label="Ruins upgrades">
+        <section class="upgrade-section lab-upgrade-section">
+            <div class="panel-heading">
+                <div>
+                    <p class="eyebrow">SALVAGE LAB</p>
+                    <h2>Field Tech (Salvage ⚙️)</h2>
+                </div>
+                <span class="lab-caption">Small upgrades for every run</span>
+            </div>
+            <div id="techUpgrades" class="upgrade-grid"></div>
         </section>
 
         <section class="upgrade-section">
@@ -264,12 +293,14 @@
             <div id="rebirthUpgrades" class="upgrade-grid"></div>
         </section>
 
+        </aside>
         <p id="saveStatus" class="save-status">Progress saves automatically.</p>
     </section>
 
     <!-- STAGE 2 -->
     <section id="stage2Panel" class="stage-panel">
-        <section class="resource-section">
+        <div id="zone2" class="zone-mount"></div>
+        <section class="resource-section" aria-label="Settlement resource dashboard">
             <div class="resource-card food-card">
                 <div class="resource-icon">🔩</div>
                 <div>
@@ -291,11 +322,13 @@
                 <div>
                     <p class="resource-label">STAGE RESETS</p>
                     <h2 id="stage2Resets">0</h2>
-                    <p class="resource-rate">5 to unlock Stage 3</p>
+                    <p class="resource-rate">Permanent upgrade currency</p>
                 </div>
             </div>
         </section>
 
+        <div id="nextPurchase2" class="next-purchase"></div>
+        <aside class="upgrade-sidebar" aria-label="Settlement upgrades">
         <section class="upgrade-section">
             <div class="panel-heading">
                 <div><p class="eyebrow">SCRAP UPGRADES</p><h2>Spend Scrap</h2></div>
@@ -309,12 +342,14 @@
             </div>
             <div id="stage2ResetUpgrades" class="upgrade-grid"></div>
         </section>
+        </aside>
 
     </section>
 
     <!-- STAGE 3 -->
     <section id="stage3Panel" class="stage-panel">
-        <section class="resource-section">
+        <div id="zone3" class="zone-mount"></div>
+        <section class="resource-section" aria-label="Industry resource dashboard">
             <div class="resource-card lab-card">
                 <div class="resource-icon">⚙️</div>
                 <div>
@@ -324,6 +359,8 @@
                 </div>
             </div>
         </section>
+        <div id="nextPurchase3" class="next-purchase"></div>
+        <aside class="upgrade-sidebar" aria-label="Industry upgrades">
         <section class="upgrade-section">
             <div class="panel-heading"><div><p class="eyebrow">PARTS UPGRADES</p><h2>Spend Parts</h2></div></div>
             <div id="stage3Upgrades" class="upgrade-grid"></div>
@@ -332,11 +369,13 @@
             <div class="panel-heading"><div><p class="eyebrow">PERMANENT</p><h2>Industry Reset Shop</h2></div></div>
             <div id="stage3ResetUpgrades" class="upgrade-grid"></div>
         </section>
+        </aside>
     </section>
 
     <!-- STAGE 4 -->
     <section id="stage4Panel" class="stage-panel">
-        <section class="resource-section">
+        <div id="zone4" class="zone-mount"></div>
+        <section class="resource-section" aria-label="Network resource dashboard">
             <div class="resource-card lab-card">
                 <div class="resource-icon">🔌</div>
                 <div>
@@ -346,6 +385,8 @@
                 </div>
             </div>
         </section>
+        <div id="nextPurchase4" class="next-purchase"></div>
+        <aside class="upgrade-sidebar" aria-label="Network upgrades">
         <section class="upgrade-section">
             <div class="panel-heading"><div><p class="eyebrow">CIRCUIT UPGRADES</p><h2>Spend Circuits</h2></div></div>
             <div id="stage4Upgrades" class="upgrade-grid"></div>
@@ -354,11 +395,13 @@
             <div class="panel-heading"><div><p class="eyebrow">PERMANENT</p><h2>Network Reset Shop</h2></div></div>
             <div id="stage4ResetUpgrades" class="upgrade-grid"></div>
         </section>
+        </aside>
     </section>
 
     <!-- STAGE 5 -->
     <section id="stage5Panel" class="stage-panel">
-        <section class="resource-section">
+        <div id="zone5" class="zone-mount"></div>
+        <section class="resource-section" aria-label="Ascension resource dashboard">
             <div class="resource-card research-card">
                 <div class="resource-icon">🔮</div>
                 <div>
@@ -368,6 +411,8 @@
                 </div>
             </div>
         </section>
+        <div id="nextPurchase5" class="next-purchase"></div>
+        <aside class="upgrade-sidebar" aria-label="Ascension upgrades">
         <section class="upgrade-section">
             <div class="panel-heading"><div><p class="eyebrow">CORE UPGRADES</p><h2>Spend Cores</h2></div></div>
             <div id="stage5Upgrades" class="upgrade-grid"></div>
@@ -376,7 +421,21 @@
             <div class="panel-heading"><div><p class="eyebrow">PERMANENT</p><h2>Ascension Reset Shop — "The Last City" is here</h2></div></div>
             <div id="stage5ResetUpgrades" class="upgrade-grid"></div>
         </section>
+        </aside>
     </section>
+
+<section id="statsPanel" class="stats-panel">
+    <div class="stats-hero">
+        <div><p class="eyebrow">CITY ARCHIVES</p><h2>Your Rebuilding Record</h2><p>Every run, click, and milestone is recorded here.</p></div>
+        <div class="stats-rank"><span>CITY RANK</span><strong id="cityRank">Rookie</strong></div>
+    </div>
+    <div class="stats-grid">
+        <article class="stat-group"><h3>⏱ Time & Activity</h3><div class="stat-lines"><div><span>Total play time</span><strong id="statPlayTime">0m</strong></div><div><span>Current session</span><strong id="statSessionTime">0m</strong></div><div><span>Total clicks</span><strong id="statTotalClicks">0</strong></div><div><span>Critical clicks</span><strong id="statCriticalClicks">0</strong></div></div></article>
+        <article class="stat-group"><h3>⚙️ City Economy</h3><div class="stat-lines"><div><span>Lifetime Salvage earned</span><strong id="statLifetimeSalvage">0</strong></div><div><span>Best Salvage/sec</span><strong id="statBestRate">0</strong></div><div><span>Buildings constructed</span><strong id="statBuildingsBuilt">0</strong></div><div><span>Highest momentum</span><strong id="statHighestCombo">0x</strong></div></div></article>
+        <article class="stat-group"><h3>📡 City Operations</h3><div class="stat-lines"><div><span>Supply Drops secured</span><strong id="statSupplyDrops">0</strong></div><div><span>Contracts completed</span><strong id="statContracts">0</strong></div><div><span>Badges earned</span><strong id="statBadges">0 / 5</strong></div><div><span>Current population</span><strong id="statPopulation">0</strong></div></div></article>
+        <article class="stat-group"><h3>🌅 Legacy</h3><div class="stat-lines"><div><span>Rebirths</span><strong id="statRebirths">0</strong></div><div><span>Settlement resets</span><strong id="statStage2Resets">0</strong></div><div><span>Stages unlocked</span><strong id="statStagesUnlocked">1 / 5</strong></div><div><span>Salvage Shards</span><strong id="statShards">0</strong></div></div></article>
+    </div>
+</section>
 
 </main>
 
@@ -387,7 +446,54 @@
 
 <div id="notification" class="notification">Game Saved</div>
 <div id="fxLayer" class="fx-layer" aria-hidden="true"></div>
+<div id="introModal" class="intro-modal" role="dialog" aria-modal="true" aria-labelledby="introTitle" hidden>
+    <div class="intro-card">
+        <span class="intro-symbol">🌆</span>
+        <p class="eyebrow">YEAR 2189 · THE LAST CITY</p>
+        <h2 id="introTitle">Welcome, Builder.</h2>
+        <p>The old world is silent, but a single district still has power. Gather what remains, shelter the survivors, and turn a campfire into humanity’s last city.</p>
+        <div class="intro-steps"><span>1. Rebuild the outpost</span><span>2. Hatch companions</span><span>3. Complete zone quests</span></div>
+        <button id="introStartButton" class="intro-start-button">BEGIN THE REBUILD</button>
+    </div>
+</div>
 
+<dialog id="hatchModal" class="hatch-modal" aria-labelledby="hatchTitle" aria-describedby="hatchStatus">
+    <div class="hatch-card">
+        <p class="eyebrow">COMPANION SIGNAL FOUND</p>
+        <h2 id="hatchTitle">Opening your egg</h2>
+        <div class="hatch-reel" aria-hidden="true">
+            <div class="hatch-pointer"></div>
+            <div id="hatchStrip" class="hatch-strip"></div>
+        </div>
+        <p id="hatchStatus" class="hatch-status" role="status" aria-live="polite">Rolling through this egg’s pets…</p>
+        <div id="hatchResult" class="hatch-result" hidden>
+            <span id="hatchRarity" class="hatch-rarity"></span>
+            <h3 id="hatchPetName"></h3>
+            <p id="hatchPetBonus"></p>
+            <small id="hatchPetCopies"></small>
+        </div>
+        <button id="hatchSkipButton" class="hatch-action" autofocus>Skip animation</button>
+        <label class="hatch-preference"><input id="skipHatchAnimations" type="checkbox"> Skip future hatch animations</label>
+    </div>
+</dialog>
+
+<dialog id="petMergeModal" class="hatch-modal pet-merge-modal" aria-labelledby="mergeTitle" aria-describedby="mergeWarning">
+    <div class="hatch-card">
+        <p class="eyebrow">GOLD CONVERSION LAB</p>
+        <h2 id="mergeTitle">Merge pet copies</h2>
+        <div id="mergePreview" class="merge-preview"></div>
+        <p id="mergePower" class="merge-power"></p>
+        <div id="mergeChoices" class="merge-choices" aria-label="Copies to consume"></div>
+        <strong id="mergeOdds" class="merge-odds" role="status" aria-live="polite"></strong>
+        <p id="mergeWarning" class="merge-warning"></p>
+        <button id="mergeConfirmButton" class="hatch-action">Confirm merge</button>
+        <button id="mergeCloseButton" class="hatch-action merge-cancel">Cancel</button>
+    </div>
+</dialog>
+
+<script src="progression.js"></script>
+<script src="adventure.js"></script>
+<script src="pets.js"></script>
 <script src="game.js"></script>
 </body>
 </html>
