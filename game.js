@@ -996,6 +996,7 @@ window.closeOfflineModal = closeOfflineModal;
 // =============================================
 
 function gameLoop() {
+    if (window.LastCityCloud?.isSwitching()) return;
     game.playTimeSeconds++;
     if (game.combo > 0 && Date.now() > game.comboExpires) {
         game.combo = Math.max(0, game.combo - 5);
@@ -1034,6 +1035,7 @@ setInterval(() => saveGame(false), 5000);
 // =============================================
 
 function updateGame() {
+    checkAutoHatchContext();
     checkAchievements();
     if (soundButton) {
         soundButton.textContent = game.soundEnabled ? "🔊 Sound" : "🔇 Sound";
@@ -1451,9 +1453,20 @@ function renderResetUpgrades() {
 // SAVE / LOAD
 // =============================================
 
+function getSaveKey() {
+    return window.LastCityCloud ? window.LastCityCloud.getSaveKey() : SAVE_KEY;
+}
+
 function saveGame(showMsg = true) {
     game.lastSeen = Date.now();
-    localStorage.setItem(SAVE_KEY, JSON.stringify(game));
+    try {
+        localStorage.setItem(getSaveKey(), JSON.stringify(game));
+    } catch (error) {
+        if (showMsg) showNotification("Browser storage unavailable. Check your cloud save status.");
+        window.LastCityCloud?.onSave(showMsg);
+        return;
+    }
+    window.LastCityCloud?.onSave(showMsg);
     const indicator = el("autoSaveIndicator");
     if (indicator) {
         indicator.textContent = "● Progress saved";
@@ -1463,9 +1476,13 @@ function saveGame(showMsg = true) {
     if (showMsg) showNotification("Game saved!");
 }
 
-function loadGame() {
-    const saved = localStorage.getItem(SAVE_KEY);
+function loadGame(snapshot) {
+    if (autoHatchSession) stopAutoHatch("Auto hatch stopped when loading a save.");
+    const saved = snapshot === undefined ? localStorage.getItem(getSaveKey()) : snapshot;
     if (!saved) {
+        game = JSON.parse(JSON.stringify(defaultGame));
+        game.lastSeen = Date.now();
+        game.sessionStartedAt = Date.now();
         updateGame();
         return;
     }
@@ -1502,9 +1519,12 @@ function loadGame() {
 saveButton.addEventListener("click", () => saveGame(true));
 resetButton.addEventListener("click", () => {
     if (!confirm("Reset EVERYTHING? This cannot be undone.")) return;
-    localStorage.removeItem(SAVE_KEY);
+    if (autoHatchSession) stopAutoHatch("Auto hatch stopped by full reset.");
+    localStorage.removeItem(getSaveKey());
     game = JSON.parse(JSON.stringify(defaultGame));
+    game.lastSeen = Date.now();
     updateGame();
+    saveGame(false);
     showNotification("Full reset.");
 });
 
@@ -1671,3 +1691,17 @@ setupBuildingButtons();
 loadGame();
 initAdventureUI();
 setTimeout(showIntroModal, 600);
+
+// Small bridge used by the account module; saves still use the existing game loader.
+window.LastCityGame = {
+    snapshot: () => JSON.parse(JSON.stringify(game)),
+    load: snapshot => {
+        closeHatchReveal();
+        if (mergeSelection) closePetMerge();
+        currentStageView = 1;
+        stageTabs.forEach(tab => tab.classList.toggle("active", tab.dataset.stage === "1"));
+        stagePanels.forEach(panel => panel.classList.toggle("active", panel.id === "stage1Panel"));
+        loadGame(snapshot);
+    },
+    saveLocal: () => saveGame(false)
+};

@@ -6,6 +6,7 @@
     <title>Last City | CTRL + ALT + DEFEAT</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="cyberpunk.css">
+    <link rel="stylesheet" href="cloud-save.css">
 </head>
 <body>
 
@@ -16,6 +17,7 @@
         <p class="tagline">Rebuild Civilization One Click at a Time</p>
     </div>
     <div class="header-buttons">
+        <button id="accountButton" class="secondary-button">☁ Account</button>
         <button id="soundButton" class="secondary-button" aria-pressed="true">🔊 Sound</button>
         <button id="saveButton" class="secondary-button">💾 Save</button>
         <button id="resetButton" class="danger-button">↻ Reset</button>
@@ -50,6 +52,7 @@
     </section>
     <div id="tutorialHint" class="tutorial-hint">Tip: gather Salvage, then invest it in your first Camp.</div>
     <div id="autoSaveIndicator" class="auto-save-indicator">● Auto-save ready</div>
+    <div id="cloudSaveStatus" class="cloud-save-status" role="status" aria-live="polite">Guest play · saved on this browser</div>
     <section id="companionPanel" class="companion-panel" aria-label="Eggs and companions"></section>
 
     <!-- STAGE 1 -->
@@ -473,6 +476,7 @@
             <small id="hatchPetCopies"></small>
         </div>
         <button id="hatchSkipButton" class="hatch-action" autofocus>Skip animation</button>
+        <button id="hatchAutoStopButton" class="hatch-action auto-hatch-stop" hidden>Stop Auto Hatch</button>
         <label class="hatch-preference"><input id="skipHatchAnimations" type="checkbox"> Skip future hatch animations</label>
     </div>
 </dialog>
@@ -491,9 +495,52 @@
     </div>
 </dialog>
 
+<dialog id="accountModal" class="account-modal" aria-labelledby="accountTitle">
+    <div class="account-heading">
+        <div><p class="eyebrow">YOUR CITY, ANYWHERE</p><h2 id="accountTitle">Player account</h2></div>
+        <button id="accountClose" class="secondary-button" aria-label="Close account">✕</button>
+    </div>
+    <p id="accountMessage" role="status" aria-live="polite"></p>
+    <form id="accountForm">
+        <label>Email<input id="accountEmail" type="email" autocomplete="email" required maxlength="254"></label>
+        <label>Password<input id="accountPassword" type="password" autocomplete="current-password" required minlength="8" maxlength="128"></label>
+        <div class="account-actions">
+            <button id="loginButton" class="secondary-button" type="submit">Log in</button>
+            <button id="signupButton" class="secondary-button" type="button">Create account</button>
+            <button id="forgotPasswordButton" class="secondary-button" type="button">Forgot password?</button>
+        </div>
+        <p class="account-hint">Guests can keep playing. Accounts save progress across devices. New passwords need at least 8 characters.</p>
+    </form>
+    <form id="recoveryForm" hidden>
+        <label>New password<input id="newAccountPassword" type="password" autocomplete="new-password" required minlength="8" maxlength="128"></label>
+        <button class="secondary-button" type="submit">Update password</button>
+    </form>
+    <div id="signedInPanel" hidden>
+        <p>Signed in as <strong id="accountIdentity"></strong></p>
+        <p id="accountSyncDetail"></p>
+        <div class="account-actions">
+            <button id="cloudSyncButton" class="secondary-button">Sync now</button>
+            <button id="importGuestButton" class="secondary-button">Use guest city for this account</button>
+            <button id="logoutButton" class="secondary-button">Log out</button>
+        </div>
+        <p class="account-hint">Cloud saves sync every 30 seconds and when you press Save. Log out to return to your separate guest city.</p>
+    </div>
+    <div id="saveConflictPanel" hidden>
+        <h3>Choose a city to keep</h3>
+        <p id="saveConflictDetail"></p>
+        <div class="account-actions">
+            <button id="useCloudSaveButton" class="secondary-button">Use cloud city</button>
+            <button id="useDeviceSaveButton" class="secondary-button">Keep this device’s city</button>
+        </div>
+        <p class="account-hint">Automatic uploads pause until you choose. The replaced city is backed up on this browser.</p>
+    </div>
+</dialog>
+
+<script src="cloud-config.js"></script>
 <script src="progression.js"></script>
 <script src="adventure.js"></script>
 <script src="pets.js"></script>
 <script src="game.js"></script>
+<script src="cloud-save.js"></script>
 </body>
 </html>

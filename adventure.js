@@ -3,7 +3,7 @@ const ADVENTURE_DEFAULTS = {
     beaconLit: false, searches: 0, siteSearches: [0, 0, 0], keys: 0, assembly: [], deliveries: 0,
     route: [0, 2, 1, 3], routeStep: 0, links: 0,
     shields: [], bossHealth: 100, bossDefeated: false, cooldownUntil: 0,
-    eggsHatched: 0, mergesAttempted: 0, goldPetsCreated: 0, collection: {}, equipped: {}, pity: {}, boosts: {},
+    eggsHatched: 0, mergesAttempted: 0, goldPetsCreated: 0, collection: {}, equipped: {}, autoEquipBest: {}, pity: {}, boosts: {},
     progression: normalizeProgression()
 };
 const ZONES = {
@@ -35,12 +35,14 @@ function isZoneUnlocked(stage) {
     return stage === 1 || !!game["stage" + stage + "Unlocked"];
 }
 function normalizeAdventure(saved = {}) {
+    const collection = { ...(saved.collection || {}) };
     return {
         ...ADVENTURE_DEFAULTS, ...saved,
         assembly: [...(saved.assembly || [])], shields: [...(saved.shields || [])],
         siteSearches: [...(saved.siteSearches || [0, 0, 0])],
         route: [...(saved.route || ADVENTURE_DEFAULTS.route)],
-        collection: { ...(saved.collection || {}) }, equipped: { ...(saved.equipped || {}) },
+        collection, equipped: normalizePetEquipment(saved.equipped || {}, collection),
+        autoEquipBest: { ...(saved.autoEquipBest || {}) },
         pity: { ...(saved.pity || {}) }, boosts: { ...(saved.boosts || {}) },
         progression: normalizeProgression(saved.progression)
     };
@@ -49,22 +51,23 @@ function petBonus(id) {
     return (game.adventure.collection[id] || 0) > 0 ? petBasePower(id) : 0;
 }
 function getCompanionMultiplier(stage) {
-    const slots = game.adventure.equipped[stage] || [];
-    const total = [...new Set(slots)].slice(0, 3).reduce((sum, id) => sum + (id.startsWith(stage + "-") ? petBonus(id) : 0), 0);
+    const slots = validPetSlots(stage, game.adventure.equipped[stage], game.adventure.collection);
+    const total = slots.reduce((sum, id) => sum + petBonus(id), 0);
     const boost = (game.adventure.boosts[stage] || 0) > Date.now() ? 2 : 1;
     return (1 + total) * boost;
 }
 function equipPet(stage, id) {
     if (!petInfo(id) || !isZoneUnlocked(stage) || !id.startsWith(stage + "-") || !game.adventure.collection[id]) return;
-    const slots = game.adventure.equipped[stage] ||= [];
-    const index = slots.indexOf(id);
-    if (index >= 0) slots.splice(index, 1);
-    else if (slots.length < 3) slots.push(id);
-    else return showNotification("Three companions equipped. Unequip one first.");
+    reconcilePetEquipment(stage);
+    const equipped = game.adventure.equipped[stage];
+    if (equippedCopyCount(stage, id) >= game.adventure.collection[id]) return showNotification("All owned copies are already equipped.");
+    if (equipped.length >= 3) return showNotification("Three companions equipped. Unequip one first.");
+    equipped.push(id);
     updateGame();
     saveGame(false);
 }
-function hatchEgg(stage) {
+function hatchEgg(stage, { automatic = false } = {}) {
+    if (automatic ? autoHatchSession?.stage !== stage : !!autoHatchSession) return;
     if (activeHatch || mergeSelection) return;
     if (!isZoneUnlocked(stage)) return;
     const zone = ZONES[stage];
@@ -86,7 +89,8 @@ function hatchEgg(stage) {
     game.adventure.collection[id] = (game.adventure.collection[id] || 0) + 1;
     game.adventure.eggsHatched++;
     const slots = game.adventure.equipped[stage] ||= [];
-    if (!slots.includes(id) && slots.length < 3) slots.push(id);
+    if (game.adventure.autoEquipBest[stage]) applyBestPets(stage);
+    else if (slots.length < 3) slots.push(id);
     updateGame();
     // Credit and save exactly once BEFORE the visual roll. Skip/refresh never rerolls.
     saveGame(false);
@@ -120,6 +124,7 @@ function startHatchReveal(stage, rarity, id) {
     el("skipHatchAnimations").checked = !!game.skipHatchAnimations;
     document.body.classList.add("hatch-open");
     modal.showModal();
+    syncAutoHatchControls();
     const reducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
     if (game.skipHatchAnimations || reducedMotion) { revealHatch(); return; }
     // Let the initial position paint before transitioning toward the winning tile.
@@ -160,8 +165,10 @@ function revealHatch() {
     el("hatchResult").hidden = false;
     el("hatchSkipButton").textContent = "Continue";
     playSfx("upgrade");
+    scheduleAutoHatchReveal();
 }
-function closeHatchReveal() {
+function closeHatchReveal({ continueAuto = false } = {}) {
+    if (!continueAuto && autoHatchSession) stopAutoHatch();
     if (!activeHatch) return;
     if (activeHatch.phase === "rolling") revealHatch();
     clearHatchTimers();
@@ -271,15 +278,19 @@ function initAdventureUI() {
     initPetUI();
     el("hatchSkipButton")?.addEventListener("click", () => {
         if (activeHatch?.phase === "rolling") revealHatch();
+        else if (autoHatchSession) advanceAutoHatch();
         else closeHatchReveal();
     });
     el("skipHatchAnimations")?.addEventListener("change", event => toggleHatchAnimationPreference(event.target.checked));
     el("hatchModal")?.addEventListener("cancel", event => {
         event.preventDefault();
+        if (autoHatchSession) stopAutoHatch();
         if (activeHatch?.phase === "rolling") revealHatch();
         else closeHatchReveal();
     });
     el("hatchModal")?.addEventListener("close", () => {
+        if (el("hatchModal").open) return;
+        if (activeHatch && autoHatchSession) stopAutoHatch();
         clearHatchTimers();
         activeHatch = null;
         document.body.classList.remove("hatch-open");
@@ -300,7 +311,14 @@ function initAdventureUI() {
         if (button.dataset.petAction === "hatch") hatchEgg(currentStageView);
         if (button.dataset.petAction === "boost") buyZoneBoost(currentStageView);
         if (button.dataset.petAction === "equip") equipPet(petInfo(button.dataset.id)?.stage, button.dataset.id);
-        if (button.dataset.petAction === "view") { companionView = button.dataset.view === "inventory" ? "inventory" : "eggs"; renderCompanions(); }
+        if (button.dataset.petAction === "unequip") unequipPet(petInfo(button.dataset.id)?.stage, button.dataset.id);
+        if (button.dataset.petAction === "best") equipBestPets(currentStageView);
+        if (button.dataset.petAction === "auto-best") toggleAutoEquipBest(currentStageView);
+        if (button.dataset.petAction === "auto-hatch") {
+            if (autoHatchSession) stopAutoHatch();
+            else startAutoHatch(currentStageView);
+        }
+        if (button.dataset.petAction === "view") { companionView = button.dataset.view === "inventory" ? "inventory" : "eggs"; checkAutoHatchContext(); renderCompanions(); }
         if (button.dataset.petAction === "filter") {
             if (button.dataset.filter === "scope") inventoryScope = button.dataset.value === "all" ? "all" : "zone";
             if (button.dataset.filter === "kind") inventoryKind = ["normal", "gold"].includes(button.dataset.value) ? button.dataset.value : "all";

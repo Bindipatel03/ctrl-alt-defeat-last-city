@@ -209,14 +209,14 @@ assert.equal(hatch(1), "1-2", "Tenth low-rarity streak must award Rare+");
 assert.equal(run("game.adventure.pity[1]"), 0);
 assert.equal(run("game.adventure.collection['1-0']"), 9);
 assert.equal(run("petBonus('1-0')"), .08, "Duplicate copies are merge materials, not passive power");
-assert.equal(run("game.adventure.equipped[1].length"), 2, "Duplicate pets do not use extra slots");
+assert.equal(run("game.adventure.equipped[1].length"), 3, "Three duplicate copies fill the three slots");
 run("Math.random = () => .99");
 hatch(1);
 assert.equal(run("game.adventure.equipped[1].length"), 3);
 assert.equal(run("game.adventure.collection['1-4']"), 1);
 run("game.adventure.collection['1-1'] = 1; equipPet(1, '1-1')");
 assert.equal(run("game.adventure.equipped[1].length"), 3);
-run("equipPet(1, '1-0'); equipPet(1, '1-1')");
+run("unequipPet(1, '1-0'); equipPet(1, '1-1')");
 assert.equal(run("game.adventure.equipped[1].includes('1-1')"), true);
 const unboosted = run("getCompanionMultiplier(1)");
 run("buyZoneBoost(1)");
@@ -377,7 +377,7 @@ assert.equal(run("mergePets('1-3', 5).success"), false, "Five-copy chance is exa
 // Inventory permits explicit normal/gold equipment while respecting zone slots.
 run("game.adventure.collection['1-1'] = 1; game.adventure.collection['1-2'] = 1; game.adventure.collection['1-4'] = 1; game.adventure.equipped[1] = []; equipPet(1,'1-1'); equipPet(1,'1-2'); equipPet(1,'1-4'); equipPet(1,'1-0-gold')");
 assert.equal(run("game.adventure.equipped[1].includes('1-0-gold')"), false);
-run("equipPet(1,'1-4'); equipPet(1,'1-0-gold')");
+run("unequipPet(1,'1-4'); equipPet(1,'1-0-gold')");
 assert.equal(run("game.adventure.equipped[1].includes('1-0-gold')"), true);
 assert.equal(run("game.adventure.equipped[1].length"), 3);
 assert.ok(Math.abs(run("getCompanionMultiplier(1)") - 1.55) < 1e-12);
@@ -415,3 +415,85 @@ for (let stage = 1; stage <= 5; stage++) {
     }
 }
 console.log("Passed: inventory filters/equipment, merge odds, failed-copy losses, six-copy guarantee, double-submit guard, ×1.25 gold power, persistence and all 25 pet artwork mappings.");
+
+// Inventory slots are individual copies, not a Set of pet types.
+run("game = JSON.parse(JSON.stringify(defaultGame)); inventoryKind = 'all'; inventoryScope = 'zone'; game.adventure.collection = {'1-0':3}; game.adventure.equipped[1] = []; equipPet(1,'1-0'); equipPet(1,'1-0'); equipPet(1,'1-0')");
+assert.equal(run("equippedCopyCount(1,'1-0')"), 3);
+assert.ok(Math.abs(run("getCompanionMultiplier(1)") - 1.24) < 1e-12);
+run("equipPet(1,'1-0')");
+assert.equal(run("game.adventure.equipped[1].length"), 3, "Fourth slot is not allowed");
+run("unequipPet(1,'1-0')");
+assert.equal(run("equippedCopyCount(1,'1-0')"), 2);
+assert.ok(run("petInventoryMarkup(1)").includes("2 equipped · 1 available"));
+run("equipPet(1,'1-0'); saveGame(false); loadGame()");
+assert.equal(run("equippedCopyCount(1,'1-0')"), 3, "Duplicate-equipped copies survive loading");
+run("game.adventure.collection = {'1-0':1}; game.adventure.equipped[1] = []; equipPet(1,'1-0'); equipPet(1,'1-0')");
+assert.equal(run("equippedCopyCount(1,'1-0')"), 1, "Cannot equip copies that are not owned");
+assert.equal(run("normalizeAdventure({collection:{'1-0':1},equipped:{1:['1-0','1-0','2-0']}}).equipped[1].length"), 1);
+run("game.adventure.collection = {'1-0':7}; game.adventure.equipped[1] = ['1-0','1-0','1-0']; mergePets('1-0',6)");
+assert.equal(run("game.adventure.collection['1-0']"), 1);
+assert.equal(run("equippedCopyCount(1,'1-0')"), 1, "Partial consumption removes only no-longer-owned equipped copies");
+run("game.adventure.collection = {'1-0':3}; game.adventure.equipped[1] = ['1-0','1-0','1-0']; Math.random = () => .99; mergePets('1-0',2)");
+assert.equal(run("equippedCopyCount(1,'1-0')"), 1, "Failed merges also reconcile slots");
+
+run("game.adventure.collection = {'1-2-gold':2,'1-3':1,'1-0':8,'2-4-gold':3}; equipBestPets(1)");
+assert.equal(run("game.adventure.equipped[1].join(',')"), "1-3,1-2-gold,1-2-gold");
+run("toggleAutoEquipBest(1); game.salvage = 1000; Math.random = () => .99");
+hatch(1);
+assert.equal(run("game.adventure.equipped[1][0]"), "1-4", "Auto-equip updates after hatching a stronger pet");
+run("game.adventure.collection['1-4'] = 6; mergePets('1-4',6)");
+assert.equal(run("game.adventure.equipped[1][0]"), "1-4-gold", "Auto-equip ranks a newly merged gold pet");
+run("saveGame(false); loadGame()");
+assert.equal(run("game.adventure.autoEquipBest[1]"), true);
+assert.equal(run("equippedCopyCount(1,'1-2-gold')"), 1);
+
+function fireTimer(id) {
+    const timer = pendingTimers.get(id);
+    assert.ok(timer, "Expected a pending auto-hatch timer");
+    pendingTimers.delete(id);
+    timer.fn();
+}
+// Instant-animation setting still has a reveal pause and interval; no tight spending loop.
+run("game = JSON.parse(JSON.stringify(defaultGame)); game.skipHatchAnimations = true; game.salvage = 500; Math.random = () => 0; currentStageView = 1; currentGameMode = 'companions'; companionView = 'eggs'; document.hidden = false");
+assert.equal(run("startAutoHatch(1)"), true);
+assert.equal(run("game.adventure.eggsHatched"), 1);
+assert.equal(run("game.salvage"), 350);
+assert.equal(run("startAutoHatch(1)"), false, "Repeated starts cannot create concurrent hatch loops");
+assert.equal(run("hatchEgg(1)"), undefined, "Manual hatch is blocked while auto hatch is active");
+assert.equal(nodes.get("hatchAutoStopButton").hidden, false);
+for (let i = 0; i < 3; i++) {
+    const revealPause = run("autoHatchSession.timer");
+    assert.equal(pendingTimers.get(revealPause).delay, 900);
+    fireTimer(revealPause);
+    assert.equal(run("activeHatch"), null);
+    const nextEggTimer = run("autoHatchSession.timer");
+    assert.equal(pendingTimers.get(nextEggTimer).delay, 750);
+    fireTimer(nextEggTimer);
+}
+assert.equal(run("autoHatchSession"), null, "Auto hatch stops when another egg is unaffordable");
+assert.equal(run("game.adventure.eggsHatched"), 3);
+assert.equal(run("game.salvage"), 50);
+assert.equal(run("equippedCopyCount(1,'1-0')"), 3);
+assert.equal(nodes.get("hatchAutoStopButton").hidden, true);
+
+run("game.salvage = 1000; startAutoHatch(1)");
+const stoppedTimer = run("autoHatchSession.timer"), staleAutoCallback = pendingTimers.get(stoppedTimer).fn;
+const hatchedBeforeStop = run("game.adventure.eggsHatched");
+run("stopAutoHatch()");
+assert.ok(!pendingTimers.has(stoppedTimer));
+staleAutoCallback();
+assert.equal(run("game.adventure.eggsHatched"), hatchedBeforeStop);
+assert.equal(run("activeHatch.phase"), "revealed", "Stopping preserves the already-paid reward");
+run("closeHatchReveal(); startAutoHatch(1); currentStageView = 2; updateGame()");
+assert.equal(run("autoHatchSession"), null, "Switching stage stops auto hatch");
+run("closeHatchReveal(); currentStageView = 1; startAutoHatch(1); companionView = 'inventory'; checkAutoHatchContext()");
+assert.equal(run("autoHatchSession"), null, "Inventory view stops auto hatch");
+run("closeHatchReveal(); companionView = 'eggs'; startAutoHatch(1); document.hidden = true; checkAutoHatchContext()");
+assert.equal(run("autoHatchSession"), null, "Background tabs must not spend currency");
+run("closeHatchReveal(); document.hidden = false; game.salvage = 1000; startAutoHatch(1); saveGame(false); loadGame()");
+assert.equal(run("autoHatchSession"), null, "Auto hatch never resumes spending when a save loads");
+run("closeHatchReveal(); game.salvage = 1000; game.skipHatchAnimations = false; startAutoHatch(1)");
+assert.equal(run("activeHatch.phase"), "rolling");
+assert.equal(run("autoHatchSession.timer"), null, "A second egg waits until the reel reveals");
+run("revealHatch(); stopAutoHatch(); closeHatchReveal()");
+console.log("Passed: copy-by-copy equipment, owned-copy bounds, merge slot cleanup, Equip Best, saved auto-equip, serial auto-hatch, spending limits and stop/pause safety.");

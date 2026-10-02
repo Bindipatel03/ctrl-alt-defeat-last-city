@@ -20,8 +20,9 @@ Normal hatch odds: Common 50%, Uncommon 28%, Rare 15%, Epic 6%, Legendary 1%.
 After nine consecutive Common/Uncommon hatches, the next hatch guarantees Rare
 or better (Rare 68.18%, Epic 27.27%, Legendary 4.55%). Rare+ resets the counter.
 Each zone tracks its own pity counter.
-Each pet type uses only one equipment slot. Extra copies are now merge materials,
-not automatic strength boosts; all previously collected copies are retained.
+Each equipped COPY uses one equipment slot and adds its own power. Multiple
+copies of the same normal or gold pet can fill the three slots. Unequipped copies
+do not add power and can be used as merge materials. Existing copies are retained.
 
 Each zone also sells a 60-second ×2 resource booster. Active boosters cannot be
 bought again until they expire. There are no real-money purchases.
@@ -36,16 +37,32 @@ skipping or double-pressing cannot lose a reward, redraw it or charge twice.
 
 The Companions menu has separate Eggs and Inventory views. Inventory shows only
 owned pets, with quantities, equipment status, normal/gold filters and an all-zone
-filter. Each zone has three equipment slots. Its normal and gold versions count
-as separate pet types. Gold adds 1.25 times the standard pet's base bonus (for
+filter. Each zone has three equipment slots. Equip 1 and Unequip 1 controls show
+how many copies are equipped and available. Gold adds 1.25 times the standard pet's base bonus (for
 example, an 8% standard bonus becomes 10%). It must be equipped from Inventory.
+
+Equip Best fills this zone's slots with the strongest three OWNED copies, including
+duplicates and gold variants. Auto-equip Best is a saved per-zone preference that
+reranks equipment after hatches and merges. Slot counts are checked against owned
+quantities on load and after merging; consuming copies cannot leave phantom pets
+equipped.
+
+Start Auto Hatch opens one egg at a time, waits for its reveal, pauses 0.9 seconds
+on the result, then waits 0.75 seconds before opening another. Skip animations and
+reduced motion still keep these delays. Stop controls are available in the egg
+shop and hatch window. Auto hatch stops if funds run out, the player switches
+zone/menu, opens Inventory or the merge lab, hides the game, loads a save or resets
+the game. It never restarts from a save or spends offline. Stopping does not remove
+the pet already purchased by the current hatch. Escape stops auto hatch; Next egg
+advances the current result early while keeping the inter-egg delay.
 
 Gold merging requires 2–6 identical NORMAL copies. Success chances are
 2: 10%, 3: 25%, 4: 50%, 5: 75%, 6: 100%. ALL selected copies are consumed on
 success OR failure. Success grants one gold copy; failure grants nothing. There
 is no currency fee. A confirmation dialog explains the loss and lets players
-choose their copy count. If the last normal copy is consumed, that type is removed
-from equipment. Gold cannot be merged again. Inventory, equipment and merge
+choose their copy count. Unequipped copies are effectively consumed first; if
+equipped copies exceed those remaining, only the excess slots are cleared.
+Gold cannot be merged again. Inventory, equipment and merge
 counters persist through saves and rebirths.
 
 Generated portrait atlases cover all 25 pets in `assets/pets/`. Each atlas has a

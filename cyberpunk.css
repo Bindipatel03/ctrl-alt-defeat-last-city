@@ -498,6 +498,13 @@ body.pet-merge-open { overflow: hidden; }
 .merge-warning { font-size: 12px; line-height: 1.7; color: #ffc0b3; padding: 14px; border: 1px solid #ff889533; border-radius: 10px; background: #ff889509; }
 .merge-cancel { background: transparent; margin-top: 10px; color: var(--muted); }
 .hatch-action[hidden] { display: none; }
+.equipment-controls { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+.equipment-controls button { min-height: 44px; padding: 10px 14px; color: #dce8f5; background: #172637; border: 1px solid #3e586e; border-radius: 8px; cursor: pointer; font-size: 11px; }
+.equipment-controls button[aria-pressed="true"] { background: #65e4ed13; color: var(--blue); border-color: #65e4ed88; }
+.equipment-hint { display: block; color: var(--muted); font-size: 10px; margin-top: 9px; }
+.auto-hatch-status { color: var(--muted); font-size: 11px; margin: 10px 0; }
+.egg-controls button[aria-pressed="true"] { border-color: #ff8895; color: #ffb5be; background: #ff889511; }
+.auto-hatch-stop { background: #ff88950c; border-color: #ff889577; color: #ffc0ca; margin-top: 10px; }
 @media (max-width: 520px) {
     .inventory-grid, .egg-pet-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .pet-card > .pet-art { width: min(105px, 100%); height: auto; }
