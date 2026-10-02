@@ -9,6 +9,7 @@
     let generation = 0, sequence = 0, conflict = null, recovering = false;
     let baseRevision = 0, tabStale = false;
     let authBusy = false, queue = Promise.resolve();
+    const ACCOUNT_GUIDANCE = "Enter your email and password, then choose Log in or Create account.";
     const key = () => owner ? `${GUEST_KEY}:account:${owner}` : GUEST_KEY;
     const metaKey = () => `${key()}:sync`;
     const read = storageKey => { try { return localStorage.getItem(storageKey); } catch (_) { return null; } };
@@ -26,7 +27,10 @@
         el("accountSyncDetail").textContent = message;
     }
     function message(text) { el("accountMessage").textContent = text; }
-    function openAccount() { if (!el("accountModal").open) el("accountModal").showModal(); }
+    function openAccount() {
+        if (!el("accountModal").open) el("accountModal").showModal();
+        if (!owner && !recovering && !el("accountMessage").textContent) message(ACCOUNT_GUIDANCE);
+    }
     function render() {
         el("accountForm").hidden = !!owner || recovering;
         el("signedInPanel").hidden = !owner || recovering;
@@ -228,17 +232,57 @@
         finally { pause(false); }
         await sync();
     }
+    function validAccountFields(action) {
+        if (action !== "recover") {
+            const emailInput = el("accountEmail");
+            emailInput.value = emailInput.value.trim();
+            if (!emailInput.value) {
+                message("Enter your email address first.");
+                emailInput.focus();
+                return false;
+            }
+            if (!emailInput.checkValidity()) {
+                message("Enter a valid email address, such as player@example.com.");
+                emailInput.focus();
+                return false;
+            }
+        }
+        if (action === "forgot") return true;
+        const passwordInput = el(action === "recover" ? "newAccountPassword" : "accountPassword");
+        if (!passwordInput.value) {
+            message(action === "recover" ? "Enter your new password first." : "Enter your password first.");
+            passwordInput.focus();
+            return false;
+        }
+        // Logins must still allow existing passwords if the server's signup policy changes.
+        if (action !== "login" && passwordInput.value.length < 8) {
+            message("Use a password with at least 8 characters.");
+            passwordInput.focus();
+            return false;
+        }
+        if (passwordInput.value.length > 128) {
+            message("Use a password with no more than 128 characters.");
+            passwordInput.focus();
+            return false;
+        }
+        return true;
+    }
+    function setAuthBusy(action, busy) {
+        authBusy = busy;
+        for (const id of ["loginButton", "signupButton", "forgotPasswordButton"]) el(id).disabled = busy;
+        el("loginButton").textContent = busy && action === "login" ? "Logging in…" : "Log in";
+        el("signupButton").textContent = busy && action === "signup" ? "Creating account…" : "Create account";
+        el("forgotPasswordButton").textContent = busy && action === "forgot" ? "Sending link…" : "Forgot password?";
+        const recoveryButton = el("recoveryForm").querySelector("button[type='submit']");
+        recoveryButton.disabled = busy;
+        recoveryButton.textContent = busy && action === "recover" ? "Updating password…" : "Update password";
+    }
     async function authAction(action) {
-        if (!client) { message("Cloud accounts are not connected yet. See CLOUD_SETUP.md."); return; }
+        if (!client) { message("Accounts are still connecting. Wait a moment, then reload if this message persists."); return; }
         if (authBusy) return;
-        if (action === "forgot") {
-            if (!el("accountEmail").reportValidity()) return;
-        } else if (action === "recover") {
-            if (!el("recoveryForm").reportValidity()) return;
-        } else if (!el("accountForm").reportValidity()) return;
-        authBusy = true;
-        for (const id of ["loginButton", "signupButton", "forgotPasswordButton"]) el(id).disabled = true;
-        message("Connecting…");
+        if (!validAccountFields(action)) return;
+        setAuthBusy(action, true);
+        message(action === "signup" ? "Creating your account…" : action === "forgot" ? "Sending a password reset link…" : action === "recover" ? "Updating your password…" : "Logging in…");
         const email = el("accountEmail").value.trim();
         const password = el("accountPassword").value;
         const redirectTo = new URL(window.location.pathname, window.location.origin).href;
@@ -255,10 +299,14 @@
             else if (action === "forgot") message("If an account exists for that email, a password reset link will arrive shortly.");
             else if (action === "recover") { recovering = false; render(); message("Password updated."); }
             else message("Signed in. Loading your city…");
-        } catch (error) { message(error.message || "Account request failed. Please try again."); }
+        } catch (error) {
+            const emailError = ["email_address_not_authorized", "email_address_invalid"].includes(error.code);
+            message(emailError && error.code === "email_address_not_authorized"
+                ? "Signup email could not be sent to this address. The game owner needs to configure email delivery in Supabase."
+                : error.message || "Account request failed. Please try again.");
+        }
         finally {
-            authBusy = false;
-            for (const id of ["loginButton", "signupButton", "forgotPasswordButton"]) el(id).disabled = false;
+            setAuthBusy(action, false);
         }
     }
     el("accountButton").addEventListener("click", openAccount);
@@ -306,9 +354,10 @@
         if (window.supabase) return Promise.resolve();
         return new Promise((resolve, reject) => {
             const script = document.createElement("script");
+            const timeout = setTimeout(() => reject(new Error("The account service took too long to load. Check your connection and reload.")), 15000);
             script.src = SDK_URL;
-            script.onload = resolve;
-            script.onerror = () => reject(new Error("Could not load the account service. Check your connection and reload."));
+            script.onload = () => { clearTimeout(timeout); resolve(); };
+            script.onerror = () => { clearTimeout(timeout); reject(new Error("Could not load the account service. Check your connection and reload.")); };
             document.head.appendChild(script);
         });
     }
@@ -319,6 +368,7 @@
             return;
         }
         try {
+            message("Connecting to the account service…");
             await loadSDK();
             client = window.supabase.createClient(config.supabaseUrl, config.supabasePublishableKey, {
                 global: {
@@ -346,6 +396,7 @@
             if (error) throw error;
             queue = queue.then(() => activate(data.session));
             await queue;
+            if (!owner && el("accountMessage").textContent === "Connecting to the account service…") message(ACCOUNT_GUIDANCE);
             setInterval(() => { if (owner && ready && !conflict) { game.saveLocal(); void sync(); } }, 30000);
         } catch (error) {
             message(error.message || "Cloud accounts could not start.");
