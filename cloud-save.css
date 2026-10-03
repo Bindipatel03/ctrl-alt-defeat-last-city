@@ -1,7 +1,7 @@
 .cloud-save-status { margin: -5px 0 18px; text-align: center; font-size: .85rem; color: #9cb6c9; }
 .cloud-save-status[data-state="error"], .cloud-save-status[data-state="conflict"] { color: #ffd38a; }
 .cloud-save-status[data-state="saved"] { color: #86e4c2; }
-.account-modal { width: min(520px, calc(100vw - 32px)); max-height: calc(100dvh - 40px); overflow: auto; padding: 24px; border: 1px solid #557492; border-radius: 18px; background: #101c2c; color: #e3edf7; box-shadow: 0 24px 100px #0009; }
+.account-modal { width: min(520px, calc(100vw - 32px)); max-height: calc(100dvh - 40px); overflow: auto; margin: auto; padding: 24px; border: 1px solid #557492; border-radius: 18px; background: #101c2c; color: #e3edf7; box-shadow: 0 24px 100px #0009; }
 .account-modal::backdrop { background: #030711d9; backdrop-filter: blur(5px); }
 .account-heading { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
 .account-heading h2 { margin: 4px 0 18px; }
@@ -11,7 +11,13 @@
 .account-actions { display: flex; flex-wrap: wrap; gap: 10px; margin: 14px 0; }
 .account-modal .secondary-button { white-space: normal; }
 .account-hint { color: #a8bdcf; font-size: .85rem; line-height: 1.6; }
-#accountMessage { line-height: 1.5; }
+#accountMessage { margin: 0 0 14px; line-height: 1.5; }
 #saveConflictPanel { margin-top: 18px; padding-top: 12px; border-top: 1px solid #557492; }
 .account-modal [hidden] { display: none !important; }
 .account-modal button:disabled { opacity: .5; cursor: wait; }
+.google-login-button { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; min-height: 44px; padding: 10px 12px; border: 1px solid #747775; border-radius: 4px; background: #fff; color: #1f1f1f; font: 500 14px/20px Arial, sans-serif; cursor: pointer; }
+.google-login-button svg { flex: 0 0 20px; }
+.google-login-button:hover:not(:disabled) { background: #f2f2f2; }
+.email-login-options { margin-top: 22px; border-top: 1px solid #557492; padding-top: 16px; }
+.email-login-options summary { cursor: pointer; color: #a8bdcf; }
+.email-login-options summary:focus-visible { outline: 2px solid #80e4ef; outline-offset: 3px; }

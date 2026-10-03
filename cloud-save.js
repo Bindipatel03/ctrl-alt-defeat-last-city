@@ -9,7 +9,9 @@
     let generation = 0, sequence = 0, conflict = null, recovering = false;
     let baseRevision = 0, tabStale = false;
     let authBusy = false, queue = Promise.resolve();
-    const ACCOUNT_GUIDANCE = "Enter your email and password, then choose Log in or Create account.";
+    const ACCOUNT_GUIDANCE = "Continue with Google to create an account or sign in and load your cloud city.";
+    const returnParams = new URLSearchParams((window.location.hash || "").slice(1));
+    const returnError = returnParams.get("error") || returnParams.get("error_code");
     const key = () => owner ? `${GUEST_KEY}:account:${owner}` : GUEST_KEY;
     const metaKey = () => `${key()}:sync`;
     const read = storageKey => { try { return localStorage.getItem(storageKey); } catch (_) { return null; } };
@@ -269,13 +271,57 @@
     }
     function setAuthBusy(action, busy) {
         authBusy = busy;
-        for (const id of ["loginButton", "signupButton", "forgotPasswordButton"]) el(id).disabled = busy;
+        for (const id of ["googleLoginButton", "loginButton", "signupButton", "forgotPasswordButton"]) el(id).disabled = busy;
+        el("googleLoginLabel").textContent = busy && action === "google" ? "Connecting to Google…" : "Continue with Google";
         el("loginButton").textContent = busy && action === "login" ? "Logging in…" : "Log in";
         el("signupButton").textContent = busy && action === "signup" ? "Creating account…" : "Create account";
         el("forgotPasswordButton").textContent = busy && action === "forgot" ? "Sending link…" : "Forgot password?";
         const recoveryButton = el("recoveryForm").querySelector("button[type='submit']");
         recoveryButton.disabled = busy;
         recoveryButton.textContent = busy && action === "recover" ? "Updating password…" : "Update password";
+    }
+    async function fetchWithTimeout(input, options = {}) {
+        const controller = new AbortController();
+        const abort = () => controller.abort();
+        options.signal?.addEventListener("abort", abort, { once: true });
+        if (options.signal?.aborted) abort();
+        const timeout = setTimeout(abort, 15000);
+        try { return await fetch(input, { ...options, signal: controller.signal }); }
+        finally { clearTimeout(timeout); options.signal?.removeEventListener("abort", abort); }
+    }
+    async function googleLogin() {
+        if (!client) { message("Accounts are still connecting. Wait a moment, then reload if this message persists."); return; }
+        if (authBusy || switching || owner) return;
+        setAuthBusy("google", true);
+        message("Connecting to Google…");
+        let redirecting = false;
+        try {
+            // Save the guest city before leaving this page for Google's sign-in screen.
+            game.saveLocal();
+            const config = window.LAST_CITY_CLOUD_CONFIG;
+            const response = await fetchWithTimeout(`${config.supabaseUrl.replace(/\/$/, "")}/auth/v1/settings`, {
+                headers: { apikey: config.supabasePublishableKey }
+            });
+            if (!response.ok) throw new Error("Could not check Google sign-in. Please try again.");
+            const settings = await response.json();
+            if (!settings.external?.google) throw new Error("Google sign-in is not enabled yet. The game owner needs to connect Google in Supabase.");
+            const { data, error } = await client.auth.signInWithOAuth({
+                provider: "google",
+                options: {
+                    redirectTo: new URL(window.location.pathname, window.location.origin).href,
+                    queryParams: { prompt: "select_account" },
+                    skipBrowserRedirect: true
+                }
+            });
+            if (error) throw error;
+            if (!data?.url) throw new Error("Google sign-in did not return a sign-in link. Please try again.");
+            window.location.assign(data.url);
+            redirecting = true;
+        } catch (error) {
+            message(error.name === "AbortError" ? "Google sign-in took too long. Check your connection and try again." : error.message || "Google sign-in failed. Please try again.");
+        } finally {
+            if (!redirecting) setAuthBusy("google", false);
+        }
     }
     async function authAction(action) {
         if (!client) { message("Accounts are still connecting. Wait a moment, then reload if this message persists."); return; }
@@ -313,6 +359,7 @@
     el("accountClose").addEventListener("click", () => el("accountModal").close());
     el("accountForm").addEventListener("submit", event => { event.preventDefault(); void authAction("login"); });
     el("signupButton").addEventListener("click", () => void authAction("signup"));
+    el("googleLoginButton").addEventListener("click", () => void googleLogin());
     el("forgotPasswordButton").addEventListener("click", () => void authAction("forgot"));
     el("recoveryForm").addEventListener("submit", event => { event.preventDefault(); void authAction("recover"); });
     el("cloudSyncButton").addEventListener("click", () => { game.saveLocal(); void sync(); });
@@ -341,6 +388,10 @@
         if (document.visibilityState === "hidden") { game.saveLocal(); void sync(); }
     });
     window.addEventListener("pagehide", () => game.saveLocal());
+    window.addEventListener("pageshow", event => {
+        // Back from Google's screen can restore this page from the browser cache.
+        if (event.persisted && authBusy) { setAuthBusy("google", false); message(ACCOUNT_GUIDANCE); }
+    });
     // Other tabs using this same account must reconcile before another upload.
     window.addEventListener("storage", event => {
         if (owner && (event.key === key() || event.key === metaKey())) {
@@ -371,17 +422,7 @@
             message("Connecting to the account service…");
             await loadSDK();
             client = window.supabase.createClient(config.supabaseUrl, config.supabasePublishableKey, {
-                global: {
-                    fetch: async (input, options = {}) => {
-                        const controller = new AbortController();
-                        const abort = () => controller.abort();
-                        options.signal?.addEventListener("abort", abort, { once: true });
-                        if (options.signal?.aborted) abort();
-                        const timeout = setTimeout(abort, 15000);
-                        try { return await fetch(input, { ...options, signal: controller.signal }); }
-                        finally { clearTimeout(timeout); options.signal?.removeEventListener("abort", abort); }
-                    }
-                }
+                global: { fetch: fetchWithTimeout }
             });
             // Never await Supabase operations inside an auth callback (its session lock is held).
             client.auth.onAuthStateChange((event, session) => {
@@ -396,7 +437,12 @@
             if (error) throw error;
             queue = queue.then(() => activate(data.session));
             await queue;
+            if (returnError && !owner) {
+                message(returnError === "access_denied" ? "Google sign-in was cancelled or denied. Try Continue with Google again." : "Sign-in could not finish. Try again, or ask the game owner to check the Google sign-in settings.");
+                openAccount();
+            }
             if (!owner && el("accountMessage").textContent === "Connecting to the account service…") message(ACCOUNT_GUIDANCE);
+            if (owner && ready && el("accountMessage").textContent === "Connecting to the account service…") message("Signed in. Your cloud city is ready.");
             setInterval(() => { if (owner && ready && !conflict) { game.saveLocal(); void sync(); } }, 30000);
         } catch (error) {
             message(error.message || "Cloud accounts could not start.");
