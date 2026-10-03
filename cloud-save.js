@@ -168,7 +168,7 @@
             });
             if (version !== generation) return;
             if (error) {
-                if (error.code === "40001") { showConflict(await fetchCloud()); return; }
+                if (error.code === "PT409" || error.message === "SAVE_CONFLICT") { showConflict(await fetchCloud()); return; }
                 throw error;
             }
             if (!data?.[0]) throw new Error("The cloud did not confirm your save.");
