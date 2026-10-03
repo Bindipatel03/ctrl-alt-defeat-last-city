@@ -3,6 +3,10 @@ const fs = require("node:fs");
 const path = require("node:path");
 const vm = require("node:vm");
 const root = path.join(__dirname, "..");
+// A business conflict must return once; serialization_failure can spin inside PostgREST 14.
+const setupSql = fs.readFileSync(path.join(root, "supabase", "setup.sql"), "utf8");
+assert.match(setupSql, /raise sqlstate 'PT409' using message = 'SAVE_CONFLICT'/i);
+assert.doesNotMatch(setupSql, /(?:errcode\s*=|raise\s+sqlstate)\s*'40001'/i);
 const GUEST = "lastCitySaveV2";
 const accountKey = id => `${GUEST}:account:${id}`;
 const city = salvage => ({ salvage, buildings: { scavenger: 0 }, lastSeen: Date.now() });
@@ -10,7 +14,7 @@ const row = (salvage, revision) => ({ state: city(salvage), schema_version: 2, r
 const session = id => ({ user: { id, email: `${id}@example.com` } });
 const clone = value => JSON.parse(JSON.stringify(value));
 
-async function harness({ user = null, cloud = [], cache = [], configured = true } = {}) {
+async function harness({ user = null, cloud = [], cache = [], configured = true, hash = "" } = {}) {
     const storage = new Map(cache);
     const rows = new Map(cloud);
     const nodes = new Map();
@@ -18,13 +22,16 @@ async function harness({ user = null, cloud = [], cache = [], configured = true 
     const intervals = [];
     const windowEvents = new Map();
     let state = city(0), authCallback, currentSession = user ? session(user) : null;
-    const controls = { offline: false, uploads: 0, afterUpload: null, reads: 0, requests: [] };
+    const controls = { offline: false, uploads: 0, afterUpload: null, reads: 0, requests: [], authRequests: [], signupError: null, signupWait: null, googleEnabled: true, oauthError: null, oauthWait: null, settingsRequests: 0 };
     function node(id) {
         if (!nodes.has(id)) nodes.set(id, {
             hidden: false, open: false, value: "", disabled: false, dataset: {}, textContent: "",
             listeners: new Map(),
             addEventListener(name, fn) { this.listeners.set(name, fn); },
             showModal() { this.open = true; }, close() { this.open = false; },
+            focus() { controls.focused = id; },
+            checkValidity() { return id !== "accountEmail" || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.value); },
+            querySelector() { return node(`${id}:submit`); },
             reportValidity() { return true; }
         });
         return nodes.get(id);
@@ -37,7 +44,17 @@ async function harness({ user = null, cloud = [], cache = [], configured = true 
             async signOut() { currentSession = null; authCallback("SIGNED_OUT", null); return { error: null }; },
             async resetPasswordForEmail() { return { error: null }; },
             async updateUser() { return { error: null }; },
-            async signUp() { return { data: { session: null }, error: null }; }
+            async signInWithOAuth(args) {
+                controls.authRequests.push({ action: "google", ...args });
+                if (controls.oauthWait) await controls.oauthWait;
+                return { data: { url: "https://test.supabase.co/auth/v1/authorize?provider=google" }, error: controls.oauthError };
+            },
+            async signUp(args) {
+                controls.authRequests.push({ action: "signup", ...args });
+                if (controls.signupWait) await controls.signupWait;
+                return { data: { session: null }, error: controls.signupError };
+            },
+            async signInWithPassword(args) { controls.authRequests.push({ action: "login", ...args }); return { data: {}, error: { message: "Invalid login credentials" } }; }
         },
         from(table) {
             assert.equal(table, "city_saves");
@@ -58,7 +75,7 @@ async function harness({ user = null, cloud = [], cache = [], configured = true 
             controls.requests.push({ id, ...clone(args) });
             if (controls.offline) throw new Error("Network offline");
             const existing = rows.get(id);
-            if ((existing?.revision || 0) !== args.p_expected_revision) return { data: null, error: { code: "40001" } };
+            if ((existing?.revision || 0) !== args.p_expected_revision) return { data: null, error: { code: "PT409", message: "SAVE_CONFLICT" } };
             const next = row(args.p_state.salvage, (existing?.revision || 0) + 1);
             next.state = clone(args.p_state);
             rows.set(id, next);
@@ -70,7 +87,7 @@ async function harness({ user = null, cloud = [], cache = [], configured = true 
     const window = {
         LAST_CITY_CLOUD_CONFIG: configured ? { supabaseUrl: "https://test.supabase.co", supabasePublishableKey: "sb_publishable_test" } : {},
         supabase: { createClient: () => client },
-        location: { pathname: "/ctrl-alt-defeat-last-city/", origin: "https://ctrl-alt-defeat-last-city.github.io" },
+        location: { pathname: "/ctrl-alt-defeat-last-city/", origin: "https://ctrl-alt-defeat-last-city.github.io", hash, assign(url) { controls.redirect = url; } },
         confirm: () => true,
         addEventListener(name, fn) { windowEvents.set(name, fn); },
         LastCityGame: {
@@ -85,7 +102,15 @@ async function harness({ user = null, cloud = [], cache = [], configured = true 
     };
     if (storage.has(GUEST)) state = JSON.parse(storage.get(GUEST));
     const context = vm.createContext({
-        window, console, Date, URL,
+        window, console, Date, URL, URLSearchParams, AbortController,
+        clearTimeout() {},
+        async fetch(url, options) {
+            assert.equal(url, "https://test.supabase.co/auth/v1/settings");
+            assert.equal(options.headers.apikey, "sb_publishable_test");
+            controls.settingsRequests++;
+            if (controls.offline) throw new Error("Network offline");
+            return { ok: true, async json() { return { external: { google: controls.googleEnabled } }; } };
+        },
         setTimeout(fn, delay) { if (delay === 0) timers.push(fn); },
         setInterval(fn) { intervals.push(fn); },
         localStorage: { getItem: key => storage.get(key) ?? null, setItem: (key, value) => storage.set(key, value) },
@@ -103,9 +128,12 @@ async function harness({ user = null, cloud = [], cache = [], configured = true 
         window, storage, rows, controls, nodes, flush, city: () => state,
         savedMeta: id => JSON.parse(storage.get(`${accountKey(id)}:sync`) || "{}"),
         async click(id) { await node(id).listeners.get("click")?.(); await flush(); },
+        async submit(id) { await node(id).listeners.get("submit")?.({ preventDefault() {} }); await flush(); },
+        fill(email, password) { node("accountEmail").value = email; node("accountPassword").value = password; },
         async changeUser(id, event = "SIGNED_IN") { currentSession = id ? session(id) : null; authCallback(event, currentSession); await flush(); },
         async save(salvage, manual = true) { state.salvage = salvage; window.LastCityGame.saveLocal(); window.LastCityCloud.onSave(manual); await flush(); },
         async interval() { intervals.forEach(fn => fn()); await flush(); },
+        async pageShow(persisted) { windowEvents.get("pageshow")({ persisted }); await flush(); },
         async storageEvent(key) { windowEvents.get("storage")({ key }); await flush(); }
     };
 }
@@ -116,6 +144,95 @@ async function harness({ user = null, cloud = [], cache = [], configured = true 
     await h.save(88);
     assert.equal(JSON.parse(h.storage.get(GUEST)).salvage, 88);
     assert.equal(h.controls.uploads, 0);
+
+    h = await harness();
+    await h.click("signupButton");
+    assert.equal(h.nodes.get("accountMessage").textContent, "Enter your email address first.");
+    assert.equal(h.controls.authRequests.length, 0);
+    h.fill("not-an-email", "ValidTestPassword");
+    await h.click("signupButton");
+    assert.match(h.nodes.get("accountMessage").textContent, /valid email/);
+    h.fill("test@example.com", "");
+    await h.click("signupButton");
+    assert.equal(h.nodes.get("accountMessage").textContent, "Enter your password first.");
+    h.fill("test@example.com", "short");
+    await h.click("signupButton");
+    assert.match(h.nodes.get("accountMessage").textContent, /at least 8/);
+    assert.equal(h.controls.authRequests.length, 0, "Invalid fields must not trigger a signup request");
+    let completeSignup;
+    h.controls.signupWait = new Promise(resolve => { completeSignup = resolve; });
+    h.fill(" test@example.com ", "ValidTestPassword");
+    await h.click("signupButton");
+    assert.equal(h.nodes.get("signupButton").textContent, "Creating account…");
+    assert.equal(h.nodes.get("signupButton").disabled, true);
+    await h.click("signupButton");
+    assert.equal(h.controls.authRequests.length, 1, "A double click cannot send a duplicate signup");
+    assert.equal(h.controls.authRequests[0].email, "test@example.com");
+    assert.equal(h.controls.authRequests[0].options.emailRedirectTo, "https://ctrl-alt-defeat-last-city.github.io/ctrl-alt-defeat-last-city/");
+    completeSignup();
+    await h.flush();
+    assert.match(h.nodes.get("accountMessage").textContent, /Check your email/);
+    assert.equal(h.nodes.get("signupButton").textContent, "Create account");
+    assert.equal(h.nodes.get("signupButton").disabled, false);
+    h.controls.signupWait = null;
+    h.controls.signupError = { code: "email_address_not_authorized", message: "Email address not authorized" };
+    h.fill("test@example.com", "ValidTestPassword");
+    await h.click("signupButton");
+    assert.match(h.nodes.get("accountMessage").textContent, /configure email delivery/);
+    assert.equal(h.nodes.get("signupButton").disabled, false);
+    h.fill("test@example.com", "legacy");
+    await h.submit("accountForm");
+    assert.equal(h.controls.authRequests.at(-1).action, "login", "Existing passwords must not be blocked by the signup length rule");
+    assert.equal(h.nodes.get("accountMessage").textContent, "Invalid login credentials");
+    console.log("Passed: inline signup validation, whitespace trimming, visible pending state, duplicate-submit prevention, confirmation instructions, SMTP errors and login submission.");
+
+    h = await harness({ cache: [[GUEST, JSON.stringify(city(123))]] });
+    h.controls.googleEnabled = false;
+    await h.click("googleLoginButton");
+    assert.match(h.nodes.get("accountMessage").textContent, /not enabled yet/);
+    assert.equal(h.controls.redirect, undefined, "Disabled providers show an inline message instead of leaving the game");
+    assert.equal(h.nodes.get("googleLoginButton").disabled, false);
+    h.controls.googleEnabled = true;
+    h.controls.oauthError = { message: "OAuth temporarily unavailable" };
+    await h.click("googleLoginButton");
+    assert.equal(h.nodes.get("accountMessage").textContent, "OAuth temporarily unavailable");
+    assert.equal(h.nodes.get("googleLoginLabel").textContent, "Continue with Google");
+    h.controls.oauthError = null;
+    h.controls.offline = true;
+    await h.click("googleLoginButton");
+    assert.equal(h.nodes.get("googleLoginButton").disabled, false);
+    assert.equal(h.controls.redirect, undefined);
+    h.controls.offline = false;
+    let completeOAuth;
+    h.controls.oauthWait = new Promise(resolve => { completeOAuth = resolve; });
+    await h.click("googleLoginButton");
+    assert.equal(h.nodes.get("googleLoginLabel").textContent, "Connecting to Google…");
+    assert.equal(h.nodes.get("signupButton").disabled, true);
+    const requests = h.controls.authRequests.length;
+    await h.click("googleLoginButton");
+    assert.equal(h.controls.authRequests.length, requests, "Duplicate Google clicks cannot start two redirects");
+    const oauth = h.controls.authRequests.at(-1);
+    assert.equal(oauth.provider, "google");
+    assert.equal(oauth.options.redirectTo, "https://ctrl-alt-defeat-last-city.github.io/ctrl-alt-defeat-last-city/");
+    assert.equal(oauth.options.queryParams.prompt, "select_account");
+    assert.equal(oauth.options.skipBrowserRedirect, true);
+    assert.equal(JSON.parse(h.storage.get(GUEST)).salvage, 123, "Guest progress is saved before navigating to Google");
+    completeOAuth();
+    await h.flush();
+    assert.match(h.controls.redirect, /provider=google/);
+    await h.pageShow(true);
+    assert.equal(h.nodes.get("googleLoginButton").disabled, false, "Back from Google's screen restores a usable login button");
+    // Supabase restores the returned OAuth session through the same auth listener.
+    h.rows.set("google-player", row(678, 2));
+    await h.changeUser("google-player");
+    assert.equal(h.city().salvage, 678);
+    assert.equal(JSON.parse(h.storage.get(GUEST)).salvage, 123);
+    await h.save(789);
+    assert.equal(h.rows.get("google-player").state.salvage, 789);
+    h = await harness({ hash: "#error=access_denied&error_description=Cancelled" });
+    assert.equal(h.nodes.get("accountModal").open, true);
+    assert.match(h.nodes.get("accountMessage").textContent, /cancelled or denied/);
+    console.log("Passed: Google provider checks, OAuth failure/retry, empty-form sign-in, duplicate-click prevention, guest save before redirect, correct return URL, returned-session cloud restore/sync and cancelled-login feedback.");
 
     h = await harness({ user: "alice", cloud: [["alice", row(500, 4)]], cache: [[GUEST, JSON.stringify(city(77))]] });
     assert.equal(h.city().salvage, 500, "A fresh device loads the cloud without a false conflict");
