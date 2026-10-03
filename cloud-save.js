@@ -290,39 +290,49 @@
         finally { clearTimeout(timeout); options.signal?.removeEventListener("abort", abort); }
     }
     async function googleLogin() {
-        if (!client) { message("Accounts are still connecting. Wait a moment, then reload if this message persists."); return; }
-        if (authBusy || switching || owner) return;
-        setAuthBusy("google", true);
-        message("Connecting to Google…");
-        let redirecting = false;
-        try {
-            // Save the guest city before leaving this page for Google's sign-in screen.
-            game.saveLocal();
-            const config = window.LAST_CITY_CLOUD_CONFIG;
-            const response = await fetchWithTimeout(`${config.supabaseUrl.replace(/\/$/, "")}/auth/v1/settings`, {
-                headers: { apikey: config.supabasePublishableKey }
-            });
-            if (!response.ok) throw new Error("Could not check Google sign-in. Please try again.");
-            const settings = await response.json();
-            if (!settings.external?.google) throw new Error("Google sign-in is not enabled yet. The game owner needs to connect Google in Supabase.");
-            const { data, error } = await client.auth.signInWithOAuth({
-                provider: "google",
-                options: {
-                    redirectTo: new URL(window.location.pathname, window.location.origin).href,
-                    queryParams: { prompt: "select_account" },
-                    skipBrowserRedirect: true
+    if (!client) {
+        message("Accounts are still connecting. Wait a moment, then reload if this message persists.");
+        return;
+    }
+
+    if (authBusy || switching || owner) return;
+
+    setAuthBusy("google", true);
+    message("Connecting to Google…");
+
+    let redirecting = false;
+
+    try {
+        // Save the guest city before leaving for Google sign-in.
+        game.saveLocal();
+
+        const { error } = await client.auth.signInWithOAuth({
+            provider: "google",
+            options: {
+                redirectTo: new URL(
+                    window.location.pathname,
+                    window.location.origin
+                ).href,
+                queryParams: {
+                    prompt: "select_account"
                 }
-            });
-            if (error) throw error;
-            if (!data?.url) throw new Error("Google sign-in did not return a sign-in link. Please try again.");
-            window.location.assign(data.url);
-            redirecting = true;
-        } catch (error) {
-            message(error.name === "AbortError" ? "Google sign-in took too long. Check your connection and try again." : error.message || "Google sign-in failed. Please try again.");
-        } finally {
-            if (!redirecting) setAuthBusy("google", false);
+            }
+        });
+
+        if (error) throw error;
+
+        redirecting = true;
+
+    } catch (error) {
+        console.error("Google sign-in error:", error);
+        message(error.message || "Google sign-in failed. Please try again.");
+    } finally {
+        if (!redirecting) {
+            setAuthBusy("google", false);
         }
     }
+}
+        
     async function authAction(action) {
         if (!client) { message("Accounts are still connecting. Wait a moment, then reload if this message persists."); return; }
         if (authBusy) return;
