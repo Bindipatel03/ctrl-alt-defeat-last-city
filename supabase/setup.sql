@@ -60,7 +60,9 @@ begin
             returning s.revision, s.updated_at;
     end if;
     if not found then
-        raise exception 'SAVE_CONFLICT' using errcode = '40001';
+        -- Application conflicts must not use serialization_failure (40001):
+        -- PostgREST 14 retries it indefinitely. PT409 returns HTTP 409 once.
+        raise sqlstate 'PT409' using message = 'SAVE_CONFLICT';
     end if;
 end;
 $$;
